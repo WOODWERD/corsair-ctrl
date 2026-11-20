@@ -1,0 +1,5 @@
+# build output
+app/build/
+spike/panel/EdgeCtrlSpike
+spike/panel/*.app/
+.DS_Store

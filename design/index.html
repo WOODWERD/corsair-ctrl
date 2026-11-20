@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corsair Ctrl — design draft</title>
+<style>
+@font-face{font-family:"Inter";font-weight:400;font-style:normal;font-display:swap;src:url("fonts/inter-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-weight:500;font-style:normal;font-display:swap;src:url("fonts/inter-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-weight:600;font-style:normal;font-display:swap;src:url("fonts/inter-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"JetBrains Mono";font-weight:400;font-style:normal;font-display:swap;src:url("fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"JetBrains Mono";font-weight:500;font-style:normal;font-display:swap;src:url("fonts/jetbrains-mono-latin-500-normal.woff2") format("woff2")}
+
+/* Corsair Ctrl on WOODWERD Digital.
+   Tokens only — no literal hex in a component.
+   Edge tier: 2560 × 720 at about 7.2 px/mm. Type on steps of root-phi from a 21px body.
+   Spacing on Fibonacci pixels (3 5 8 13 21 34 55 89). Radius 8 controls, 13 containers.
+   Minimum touch target 65px (a 9 mm fingertip at this density). */
+:root{
+  --ground:#F9F7F3; --surface:#FFFFFF; --line:#E2E0DA; --line-strong:#C9C7C0;
+  --ink:#0C0B09; --ink-soft:#5D6267;
+  --accent:#C4944A; --accent-text:#8A5F22; --accent-tint:#F0E2C8;
+  --ok:#2F9E5F; --attention:#FF9F43; --fault:#D0453A;
+  --band:#0C0B09; --band-ink:#FFFFFF; --band-soft:#A9A49A; --band-line:#3A3733;
+  --primary:#0C0B09; --primary-ink:#FFFFFF; --primary-soft:#8E8A82;
+  --on-ok:#FFFFFF; --attention-tint:#FFF1E0;
+  /* Flow Ctrl face, from cyd-flow-ctrl/src/theme.h */
+  --chip:#ECE7DE; --chip-hi:#DFD8CB; --pill:#111111; --pill-rim:#111111; --wave-idle:#5A5650; --wave-live:#FFFFFF;
+  --live:#E5484D; --on-live:#FFFFFF; --live-ink:#C9353A; --live-tint:#FBE3E3;
+  --t-micro:13px; --t-cap:16.5px; --t-body:21px; --t-h3:26.7px; --t-h2:34px; --t-h1:55px; --t-display:89px;
+  --inter:"Inter",-apple-system,system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root[data-theme="auto"]{
+    --ground:#141311; --surface:#1C1A17; --line:#2A2C2F; --line-strong:#3A3D41;
+    --ink:#ECEAE6; --ink-soft:#A3A8AD;
+    --accent-text:#D4A85E; --accent-tint:#3A2E16;
+    --band:#34373B; --band-ink:#F4F4F2; --band-soft:#B4B8BC; --band-line:#55595E;
+    --primary:#ECEAE6; --primary-ink:#141311; --primary-soft:#6D7277;
+    --attention-tint:#3A2A14;
+    --chip:#26262A; --chip-hi:#34343A; --pill:#1A1A1D; --pill-rim:#2E2E33; --wave-idle:#6E6E74;
+    --live:#FF5A36; --on-live:#14100E; --live-ink:#FF5A36; --live-tint:#34343A;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#141311; --surface:#1C1A17; --line:#2A2C2F; --line-strong:#3A3D41;
+  --ink:#ECEAE6; --ink-soft:#A3A8AD;
+  --accent-text:#D4A85E; --accent-tint:#3A2E16;
+  --band:#34373B; --band-ink:#F4F4F2; --band-soft:#B4B8BC; --band-line:#55595E;
+  --primary:#ECEAE6; --primary-ink:#141311; --primary-soft:#6D7277;
+  --attention-tint:#3A2A14;
+  --chip:#26262A; --chip-hi:#34343A; --pill:#1A1A1D; --pill-rim:#2E2E33; --wave-idle:#6E6E74;
+  --live:#FF5A36; --on-live:#14100E; --live-ink:#FF5A36; --live-tint:#34343A;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--inter);-webkit-user-select:none;user-select:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+
+/* ── Review chrome (not part of the panel) ─────────────────── */
+.review{padding:13px 16px;display:flex;flex-wrap:wrap;gap:13px 21px;align-items:center;border-bottom:1px solid var(--line);font-size:13px}
+.review h1{font-size:15px;font-weight:600;margin:0 8px 0 0}
+.review label{display:flex;align-items:center;gap:8px;color:var(--ink-soft)}
+.review select{font:inherit;font-size:13px;padding:5px 8px;border-radius:8px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+.stage{padding:16px;overflow:hidden}
+.scaler{transform-origin:0 0}
+.frame{outline:1px solid var(--line-strong)}
+.note{padding:0 16px 21px;font-size:13px;color:var(--ink-soft);max-width:900px;line-height:1.5}
+body.kiosk{overflow:hidden}
+body.kiosk .review, body.kiosk .note{display:none}
+body.kiosk .stage{padding:0}
+body.kiosk .frame{outline:0}
+
+/* ── Panel: 2560 × 720 ─────────────────────────────────────── */
+.panel{width:2560px;height:720px;background:var(--ground);display:grid;grid-template-rows:34px 55px 576px 55px;overflow:hidden;position:relative}
+
+/* Row 1: left clear for the macOS menu bar, which draws over the top 30pt. */
+.reserve{background:var(--ground)}
+.reserve.show{background:repeating-linear-gradient(135deg,var(--line) 0 8px,transparent 8px 16px);display:flex;align-items:center;justify-content:center;font-size:var(--t-micro);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+
+/* Row 2: product header */
+.header{display:flex;align-items:center;gap:21px;padding:0 21px;border-bottom:2px solid var(--accent)}
+.kit{display:flex;align-items:center;gap:8px;font-size:var(--t-micro);font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-text)}
+.kit i{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.name{font-size:var(--t-h3);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.purpose{font-size:var(--t-cap);color:var(--ink-soft)}
+.indicators{margin-left:auto;display:flex;gap:34px;align-items:center}
+.readout{display:flex;align-items:center;gap:8px;font-size:var(--t-cap)}
+.readout .k{color:var(--ink-soft);font-size:var(--t-micro);font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+.readout .v{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.dot{width:13px;height:13px;border-radius:50%;flex:none;background:var(--ok)}
+.dot.attention{background:var(--attention)}
+.dot.fault{background:var(--fault)}
+.voice .dot.fault,.area-band .dot.fault{background:var(--live)}
+.dot.idle{background:transparent;border:2px solid var(--line-strong)}
+.dot.pulse{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion: reduce){.dot.pulse,.bars i{animation:none}}
+
+/* Row 3: four areas. 374 | 1438 | 144 | 604 — the Apps strip is cut from the Agents width. */
+.areas{display:grid;grid-template-columns:374px 1438px 144px 604px}
+.area{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
+.area:last-child{border-right:0}
+.area-band{height:34px;flex:none;display:flex;align-items:center;gap:13px;padding:0 21px;background:var(--band);color:var(--band-ink);font-size:var(--t-cap)}
+.area-band .n{font-family:var(--mono);color:var(--band-soft)}
+.area-band .t{font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+.area-band .p{color:var(--band-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.area-band .s{margin-left:auto;display:flex;align-items:center;gap:8px;white-space:nowrap;font-weight:500}
+.area-body{flex:1;min-height:0;padding:21px;display:flex;flex-direction:column;gap:13px}
+
+/* 01 Glance */
+.clock{font-size:var(--t-display);font-weight:500;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.clock small{font-size:var(--t-h3);font-weight:500;color:var(--ink-soft);letter-spacing:0;margin-left:5px}
+.date{font-size:var(--t-body);color:var(--ink-soft)}
+.rows{display:flex;flex-direction:column;margin-top:8px}
+.row{display:flex;flex-direction:column;gap:3px;padding:13px 0;border-top:1px solid var(--line)}
+.row .k{font-size:var(--t-micro);font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+.row .v{font-size:var(--t-body);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .v b{font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums}
+.row .d{font-size:var(--t-cap);color:var(--ink-soft)}
+.stale{display:flex;align-items:center;gap:8px;font-size:var(--t-cap);color:var(--ink-soft)}
+.stale[hidden]{display:none}
+.spacer{flex:1}
+
+/* Buttons */
+.btn{min-height:65px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:13px;font-size:var(--t-body);font-weight:600;letter-spacing:.04em;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+.btn:active,.btn.on{background:var(--accent-tint)}
+.btn[disabled]{color:var(--line-strong);border-color:var(--line);cursor:default}
+.btn svg{width:26px;height:26px;flex:none}
+.btn.go{background:var(--ok);border-color:var(--ok);color:var(--on-ok)}
+.btn.stop{background:transparent;border:2px solid var(--fault);color:var(--fault)}
+.btn.stop:active{background:var(--fault);color:var(--on-ok)}
+.btn[disabled],.btn.go[disabled]{background:transparent;color:var(--line-strong);border:1px solid var(--line)}
+
+/* 02 Agents */
+.strip{display:flex;align-items:center;gap:13px;padding:13px 21px;border-radius:8px;background:var(--attention-tint);font-size:var(--t-body)}
+.strip b{font-weight:600}
+.strip span{color:var(--ink-soft)}
+.cards{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:13px}
+.card{border-radius:13px;background:var(--surface);border:1px solid var(--line);padding:21px;display:flex;flex-direction:column;gap:8px;text-align:left;min-width:0;position:relative}
+.card:active{background:var(--accent-tint)}
+.card .st{display:flex;align-items:center;gap:8px;font-size:var(--t-cap);font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+.card .nm{font-size:var(--t-h2);font-weight:600;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+.card .la{font-size:var(--t-body);line-height:1.35;color:var(--ink-soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex:1}
+.card .mt{display:flex;justify-content:space-between;width:100%;font-family:var(--mono);font-size:var(--t-cap);color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.card.needs{border:3px solid var(--attention);padding:19px;background:var(--attention-tint)}
+.card.needs .st,.card.needs .la{color:var(--ink)}
+.card.idle{background:transparent}
+.card.more{align-items:center;justify-content:center;text-align:center;border-style:dashed;border-color:var(--line-strong);background:transparent;gap:5px}
+.card.more .big{font-size:var(--t-h1);font-weight:500;font-variant-numeric:tabular-nums;line-height:1}
+.card.more .sub{font-size:var(--t-body);color:var(--ink-soft)}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;border:1px dashed var(--line-strong);border-radius:13px}
+.empty .h{font-size:var(--t-h2);font-weight:600}
+.empty .b{font-size:var(--t-body);color:var(--ink-soft);max-width:900px}
+.empty code{font-family:var(--mono);font-size:var(--t-cap);color:var(--ink)}
+
+/* 03 Apps — jump strip */
+.apps .area-band{padding:0 13px;gap:8px}
+.apps .area-body{padding:13px;gap:13px}
+.app{flex:1;min-height:65px;border-radius:13px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;position:relative;color:var(--ink)}
+.app:active{background:var(--accent-tint)}
+.app .ico{width:44px;height:44px;border-radius:8px;background:var(--chip);display:flex;align-items:center;justify-content:center;font-size:var(--t-h3);font-weight:600}
+.app .nm{font-size:var(--t-cap);font-weight:600}
+.app .dot{position:absolute;top:8px;right:8px;width:10px;height:10px}
+.app.front{background:var(--primary);border-color:var(--primary);color:var(--primary-ink)}
+.app.front .ico{background:var(--primary-ink);color:var(--primary)}
+.app.off .nm,.app.off .ico{color:var(--ink-soft)}
+
+/* 04 Voice — the Flow Ctrl v1.1.0 face, scaled to this panel */
+.frow{display:flex;align-items:center;gap:13px;height:89px}
+.fstatus{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.fstatus .n{display:flex;align-items:center;gap:8px;font-size:var(--t-h3);font-weight:500;color:var(--ink-soft)}
+.fstatus .l{font-size:var(--t-cap);color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fstatus .l b{color:var(--ink);font-weight:600}
+.chip{height:89px;min-width:89px;padding:0 21px;border-radius:21px;background:var(--chip);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:8px;font-size:var(--t-body);font-weight:600;border:3px solid transparent;flex:none}
+.chip:active{background:var(--chip-hi)}
+.chip svg{width:44px;height:44px;flex:none}
+.chip.hand{background:transparent;border-color:var(--live);color:var(--live)}
+.chip.hand.on{background:var(--live);color:var(--on-live)}
+.chip.trash{color:var(--ink-soft)}
+.voice.handsfree .chip.trash{background:var(--live-tint);color:var(--live-ink)}
+.chip[disabled]{background:var(--chip);border-color:transparent;color:var(--line-strong);opacity:.6;cursor:default}
+.chip .x{display:none;font-size:var(--t-h2);font-weight:600;line-height:1}
+.voice.handsfree .chip.trash svg{display:none}
+.voice.handsfree .chip.trash .x{display:block}
+.talk{flex:1;min-height:0;border-radius:999px;background:var(--pill);border:3px solid var(--pill-rim);color:var(--wave-live);display:flex;align-items:center;justify-content:center;position:relative}
+.talk .dots{display:flex;gap:18px}
+.talk .dots i{width:11px;height:11px;border-radius:50%;background:var(--wave-idle)}
+.bars{display:none;align-items:center;gap:11px;height:55%}
+.bars i{width:11px;border-radius:6px;background:currentColor;animation:wave 1s ease-in-out infinite}
+.bars i:nth-child(1){height:24%;animation-delay:-.9s}.bars i:nth-child(2){height:34%;animation-delay:-.8s}
+.bars i:nth-child(3){height:50%;animation-delay:-.7s}.bars i:nth-child(4){height:66%;animation-delay:-.6s}
+.bars i:nth-child(5){height:84%;animation-delay:-.5s}.bars i:nth-child(6){height:100%;animation-delay:-.4s}
+.bars i:nth-child(7){height:100%;animation-delay:-.3s}.bars i:nth-child(8){height:66%;animation-delay:-.2s}
+.bars i:nth-child(9){height:44%;animation-delay:-.1s}.bars i:nth-child(10){height:44%}.bars i:nth-child(11){height:28%;animation-delay:-.45s}
+@keyframes wave{50%{transform:scaleY(.55)}}
+.voice.holding .talk{box-shadow:0 0 0 5px var(--ground),0 0 0 9px var(--pill-rim)}
+.voice.holding .dots,.voice.handsfree .dots{display:none}
+.voice.holding .bars,.voice.handsfree .bars{display:flex}
+.voice.handsfree .bars{color:var(--live)}
+.talk[disabled]{opacity:.45;cursor:default}
+.cue{text-align:center;font-size:var(--t-cap);font-weight:600;letter-spacing:.18em;text-transform:uppercase;height:21px;font-variant-numeric:tabular-nums}
+.sendrow{display:grid;grid-template-columns:1fr 144px;gap:13px}
+.sendrow .chip{height:89px;border-radius:21px}
+.chip.send{font-size:var(--t-h3);letter-spacing:.08em;text-transform:uppercase}
+.chip.now{flex-direction:column;gap:0;padding:0;font-size:var(--t-cap)}
+.chip.now .keys{display:flex;gap:5px}
+.chip.now svg{width:34px;height:34px}
+
+/* Row 4: footer — the brand signs here */
+.footer{display:flex;align-items:center;gap:21px;padding:0 21px;border-top:1px solid var(--line)}
+.wwmark{height:34px;width:auto;display:block;fill:var(--ink);opacity:.9}
+.tagline{font-size:var(--t-micro);font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft)}
+.lastline{margin-left:auto;font-family:var(--mono);font-size:var(--t-cap);color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:1500px}
+.ver{font-family:var(--mono);font-size:var(--t-cap);color:var(--ink-soft)}
+
+/* Settings sheet */
+.sheet{position:absolute;left:0;top:89px;width:374px;height:576px;background:var(--surface);border-right:1px solid var(--line-strong);padding:21px;display:none;flex-direction:column;gap:8px;z-index:2}
+.sheet > *{flex:none}
+.sheet > .spacer{flex:1}
+.sheet.open{display:flex}
+.sheet h2{font-size:var(--t-h3);font-weight:600;margin:0}
+.sheet .k{font-size:var(--t-micro);font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin-top:8px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line-strong);border-radius:8px;overflow:hidden}
+.seg button{height:65px;font-size:var(--t-body);font-weight:500;border-right:1px solid var(--line-strong)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--primary);color:var(--primary-ink)}
+.kv{display:flex;justify-content:space-between;align-items:center;font-size:var(--t-cap);padding:8px 0;border-top:1px solid var(--line)}
+.kv .v{font-family:var(--mono);display:flex;align-items:center;gap:8px}
+</style>
+</head>
+<body>
+
+<div class="review" id="review">
+  <h1>Corsair Ctrl — design draft</h1>
+  <label>Theme <select id="r-theme"><option value="auto">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+  <label>Agent board <select id="r-board"><option value="typical">Typical day</option><option value="quiet">All quiet</option><option value="overflow">Busy (11 recent, 8 shown)</option><option value="empty">No sessions</option><option value="nohooks">Hooks not installed</option></select></label>
+  <label>Voice <select id="r-voice"><option value="ready">Ready</option><option value="holding">Holding to talk</option><option value="handsfree">Hands-free running</option><option value="nokeys">No Accessibility permission</option></select></label>
+  <label>Apps <select id="r-apps"><option value="all">All running</option><option value="off">Fusion not running</option></select></label>
+  <label>Glance <select id="r-glance"><option value="live">Live</option><option value="stale">Offline, last good data</option></select></label>
+  <label>Settings sheet <select id="r-sheet"><option value="closed">Closed</option><option value="open">Open</option></select></label>
+  <label>Menu bar strip <select id="r-reserve"><option value="hide">As built</option><option value="show">Mark it</option></select></label>
+  <label>Size <select id="r-size"><option value="fit">Fit window</option><option value="full">True size (2560 px)</option></select></label>
+</div>
+
+<div class="stage" id="stage"><div class="scaler" id="scaler"><div class="frame">
+
+<div class="panel" id="panel">
+  <div class="reserve" id="reserve"></div>
+
+  <header class="header">
+    <span class="name">Corsair Ctrl</span>
+    <span class="kit"><i></i>Ctrl · a WOODWERD toolkit</span>
+    <span class="purpose">Claude sessions and voice, at a glance.</span>
+    <div class="indicators">
+      <span class="readout"><span class="dot" id="i-hooks"></span><span class="k">Sessions</span><span class="v" id="v-hooks">receiving</span></span>
+      <span class="readout"><span class="dot" id="i-touch"></span><span class="k">Touch</span><span class="v">driver running</span></span>
+      <span class="readout"><span class="dot" id="i-wispr"></span><span class="k">Wispr Flow</span><span class="v" id="v-wispr">ready</span></span>
+    </div>
+  </header>
+
+  <main class="areas">
+    <!-- 01 Glance -->
+    <section class="area">
+      <div class="area-band"><span class="n">01</span><span class="t">Glance</span><span class="s" id="s-glance"><span class="dot"></span>Live</span></div>
+      <div class="area-body">
+        <div class="clock" id="clock">9:41<small>AM</small></div>
+        <div class="date" id="date">Thursday, Nov 19</div>
+        <div class="rows">
+          <div class="row"><span class="k">Austin</span><span class="v"><b>72°</b> Clear</span><span class="d">High <b style="font-family:var(--mono);font-weight:400">78°</b> · rain after 6 PM</span></div>
+          <div class="row"><span class="k">Next</span><span class="v"><b>2:30 PM</b> Site visit</span><span class="d" id="next-in">in 4 h 49 min</span></div>
+        </div>
+        <div class="stale" id="stale" hidden><span class="dot idle"></span>Offline. Showing data from 9:12 AM.</div>
+        <div class="spacer"></div>
+        <button class="btn" id="open-settings">Settings</button>
+      </div>
+    </section>
+
+    <!-- 02 Agents -->
+    <section class="area">
+      <div class="area-band"><span class="n">02</span><span class="t">Agents</span><span class="p">Claude Code sessions. Tap a card to open Claude.</span><span class="s" id="s-board"></span></div>
+      <div class="area-body" id="board"></div>
+    </section>
+
+    <!-- 03 Apps -->
+    <section class="area apps">
+      <div class="area-band"><span class="n">03</span><span class="t">Apps</span></div>
+      <div class="area-body" id="apps"></div>
+    </section>
+
+    <!-- 04 Voice -->
+    <section class="area voice" id="voice">
+      <div class="area-band"><span class="n">04</span><span class="t">Voice</span><span class="p">Wispr Flow</span><span class="s" id="s-voice"><span class="dot"></span>Ready</span></div>
+      <div class="area-body">
+        <div class="frow">
+          <div class="fstatus"><span class="n"><span class="dot" id="f-dot"></span>Flow Ctrl</span><span class="l" id="lands">Lands in <b>TextEdit</b></span></div>
+          <button class="chip hand" id="hf" aria-label="Hands-free"><svg viewBox="0 0 28 28" aria-hidden="true"><defs><mask id="hm"><rect width="28" height="28" fill="#fff"/><line x1="3" y1="3" x2="25" y2="25" stroke="#000" stroke-width="5.2"/></mask></defs><g fill="currentColor" mask="url(#hm)"><rect x="7" y="12" width="14" height="13.5" rx="4"/><rect x="7.4" y="5" width="3.2" height="10" rx="1.6"/><rect x="11" y="2.5" width="3.2" height="12.5" rx="1.6"/><rect x="14.6" y="3" width="3.2" height="12" rx="1.6"/><rect x="18.2" y="5.5" width="3.2" height="9.5" rx="1.6"/><rect x="2.5" y="12.5" width="6" height="4.5" rx="1.8"/></g><line x1="4" y1="4" x2="24" y2="24" stroke="currentColor" stroke-width="2.4"/></svg></button>
+          <button class="chip trash" id="discard" aria-label="Discard"><svg viewBox="0 0 28 28" aria-hidden="true"><defs><mask id="tm"><rect width="28" height="28" fill="#fff"/><g stroke="#000" stroke-width="1.5"><line x1="11" y1="13" x2="11.24" y2="22.4"/><line x1="14" y1="13" x2="14" y2="22.4"/><line x1="17" y1="13" x2="16.76" y2="22.4"/></g></mask></defs><g fill="currentColor"><rect x="5" y="6" width="18" height="2.6" rx="1.3"/><path fill-rule="evenodd" d="M11 3h6v3.4h-6zM12.6 4.6h2.8v1.8h-2.8z"/><polygon points="7,10.2 21,10.2 19.8,25 8.2,25" mask="url(#tm)"/></g></svg><span class="x">×</span></button>
+          <button class="chip" id="newchat"><span style="font-size:var(--t-h2);font-weight:500;line-height:1">+</span>New chat</button>
+        </div>
+        <button class="talk" id="talk" aria-label="Hold to talk">
+          <span class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <span class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        </button>
+        <div class="cue" id="cue">Hold to talk</div>
+        <div class="sendrow">
+          <button class="chip send" id="send">Send</button>
+          <button class="chip now" id="sendnow" aria-label="Send now, Command Return"><span class="keys"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M10.5 10.5V6.5a4 4 0 1 0-4 4H21.5a4 4 0 1 0-4-4V21.5a4 4 0 1 0 4-4H6.5a4 4 0 1 0 4 4Z" fill="none" stroke="currentColor" stroke-width="2.3"/></svg><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M21 4.5V17H9.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="4,17 11.5,10.5 11.5,23.5" fill="currentColor"/></svg></span>Send now</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <svg class="wwmark" viewBox="0 0 2349 1086" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="WOODWERD Design" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g transform="matrix(1,0,0,1,-33.174494,-664.858781)">
+        <g transform="matrix(4.166667,0,0,4.166667,-1351,-638)">
+            <g transform="matrix(1.169252,0,0,1.169252,879.148868,378.020418)">
+                <path d="M0,110.999C0,111.71 -0.768,112.684 -1.521,112.931L-224.492,152.966C-225.58,153.32 -227.895,153.32 -228.985,152.966L-451.954,112.931C-452.707,112.684 -453.476,111.71 -453.476,110.999L-453.476,-2.586C-453.476,-3.296 -452.707,-4.272 -451.954,-4.518L-228.986,-41.966C-228.442,-42.144 -227.601,-42.249 -226.738,-42.249C-225.874,-42.249 -225.034,-42.144 -224.491,-41.966L-1.521,-4.518C-0.768,-4.272 0,-3.296 0,-2.586L0,110.999ZM7.308,-15.68L-219.748,-54.935C-223.593,-56.191 -229.883,-56.191 -233.728,-54.935L-460.785,-15.68C-464.629,-14.426 -467.775,-10.432 -467.775,-6.804L-467.775,115.148C-467.775,118.775 -464.629,122.77 -460.785,124.023L-233.728,165.937C-229.883,167.19 -223.593,167.19 -219.748,165.937L7.308,124.023C11.152,122.77 14.297,118.775 14.297,115.148L14.297,-6.804C14.297,-10.432 11.152,-14.426 7.308,-15.68" style="fill-rule:nonzero;"/>
+            </g>
+        </g>
+        <g transform="matrix(4.166667,0,0,4.166667,-1351,-638)">
+            <g transform="matrix(1.169252,0,0,1.169252,601.98989,387.017112)">
+                <path d="M0,-27.108C1.397,-26.504 2.506,-24.811 3.767,-23.443C4.262,-22.908 4.744,-22.344 5.257,-21.783C6.297,-20.641 7.337,-19.6 8.441,-18.496C9.837,-17.098 11.177,-15.968 12.585,-14.694C12.708,-14.584 12.843,-14.467 12.995,-14.352C13.161,-14.227 13.307,-14.02 13.406,-13.974C13.537,-13.917 13.536,-14.016 13.682,-14.01C18.203,-10.244 22.764,-5.178 27.346,-0.997C28.112,-0.296 28.839,0.47 29.622,1.11C30.149,1.54 30.715,1.962 31.319,2.564C31.522,2.769 31.781,2.963 31.882,3.129C32.03,3.375 31.884,4.239 31.761,4.517C31.551,4.998 30.804,5.655 30.307,6.075C29.741,6.554 29.185,7.028 28.732,7.206C28.433,7.322 27.857,7.383 27.618,7.257C27.281,7.078 26.862,6.585 26.522,6.195C25.534,5.058 24.382,3.977 23.287,2.821C20.443,-0.182 17.358,-3.107 14.383,-6.082C13.626,-6.84 12.852,-7.581 12.159,-8.341C11.467,-9.095 10.886,-9.894 10.224,-10.585C10.171,-10.719 10.378,-10.661 10.376,-10.774C9.237,-11.761 8.325,-13.036 7.225,-14.197C5.075,-16.472 2.774,-18.921 0.378,-21.013C-0.476,-21.755 -1.42,-22.462 -2.175,-23.358C-2.407,-23.635 -2.595,-24.04 -2.824,-24.215C-2.972,-24.326 -3.414,-24.361 -3.63,-24.472C-3.837,-24.577 -4.09,-24.856 -4.349,-25.054C-4.543,-25.202 -4.783,-25.295 -4.966,-25.429C-5.195,-25.601 -5.341,-25.794 -5.581,-25.875C-5.822,-25.955 -6.157,-25.888 -6.456,-25.824C-6.946,-25.718 -7.434,-25.532 -7.893,-24.933C-8.129,-24.627 -8.129,-24.354 -8.27,-24.111C-8.416,-23.767 -8.274,-23.546 -8.457,-23.238C-8.6,-23.001 -8.929,-22.733 -9.229,-22.434C-9.54,-22.122 -9.849,-21.751 -10.066,-21.663C-10.696,-21.41 -11.881,-22.332 -12.585,-23.152C-12.894,-23.514 -13.341,-24.357 -13.219,-24.711C-13.119,-24.998 -12.783,-25.25 -12.516,-25.515C-12.249,-25.785 -11.973,-26.136 -11.711,-26.32C-11.261,-26.636 -10.697,-26.562 -10.326,-26.818C-9.721,-27.232 -9.336,-27.914 -9.211,-28.374C-9.114,-28.741 -9.208,-29.164 -9.056,-29.522C-8.922,-29.844 -8.561,-30.147 -8.306,-30.447C-6.947,-32.023 -5.242,-33.601 -3.834,-33.991C-2.027,-34.491 -0.181,-34.473 1.609,-34.265C2.187,-34.199 2.81,-34.056 3.425,-33.957C3.853,-33.887 4.326,-33.736 4.795,-33.614C4.953,-33.573 5.107,-33.57 5.24,-33.511C5.546,-33.379 5.839,-33.118 6.094,-32.929C6.128,-32.904 6.15,-32.91 6.18,-32.879C6.357,-32.694 5.962,-32.539 5.874,-32.502C5.458,-32.33 4.751,-32.419 4.349,-32.416C2.867,-32.401 1.739,-32.498 0.273,-32.244C-0.037,-32.19 -0.383,-32.063 -0.737,-31.885C-1.124,-31.691 -1.552,-31.468 -1.746,-31.183C-1.878,-30.99 -1.878,-30.568 -1.799,-30.378C-1.686,-30.121 -1.306,-29.767 -1.096,-29.504C-0.844,-29.193 -0.603,-28.856 -0.395,-28.598C-0.24,-28.407 -0.024,-28.295 0.052,-28.084C0.175,-27.74 -0.191,-27.507 0,-27.108" style="fill-rule:nonzero;"/>
+            </g>
+        </g>
+        <g transform="matrix(4.166667,0,0,4.166667,-1351,-638)">
+            <g transform="matrix(1.169252,0,0,1.169252,623.860287,387.017112)">
+                <path d="M0,-27.108C-1.398,-26.504 -2.505,-24.811 -3.768,-23.443C-4.263,-22.908 -4.743,-22.344 -5.256,-21.783C-6.298,-20.641 -7.337,-19.6 -8.442,-18.496C-9.839,-17.098 -11.177,-15.968 -12.585,-14.694C-12.708,-14.584 -12.842,-14.467 -12.998,-14.352C-13.161,-14.227 -13.309,-14.02 -13.407,-13.974C-13.536,-13.917 -13.535,-14.016 -13.682,-14.01C-18.201,-10.244 -22.764,-5.178 -27.346,-0.997C-28.112,-0.296 -28.84,0.47 -29.622,1.11C-30.15,1.54 -30.714,1.962 -31.317,2.564C-31.523,2.769 -31.784,2.963 -31.882,3.129C-32.03,3.375 -31.884,4.239 -31.762,4.517C-31.553,4.998 -30.805,5.655 -30.308,6.075C-29.739,6.554 -29.186,7.028 -28.733,7.206C-28.434,7.322 -27.858,7.383 -27.619,7.257C-27.282,7.078 -26.863,6.585 -26.523,6.195C-25.535,5.058 -24.381,3.977 -23.286,2.821C-20.446,-0.182 -17.36,-3.107 -14.382,-6.082C-13.624,-6.84 -12.854,-7.581 -12.158,-8.341C-11.465,-9.095 -10.885,-9.894 -10.224,-10.585C-10.171,-10.719 -10.378,-10.661 -10.377,-10.774C-9.239,-11.761 -8.324,-13.036 -7.226,-14.197C-5.075,-16.472 -2.775,-18.921 -0.378,-21.013C0.475,-21.755 1.42,-22.462 2.175,-23.358C2.408,-23.635 2.596,-24.04 2.825,-24.215C2.973,-24.326 3.414,-24.361 3.629,-24.472C3.839,-24.577 4.088,-24.856 4.349,-25.054C4.544,-25.202 4.782,-25.295 4.967,-25.429C5.194,-25.601 5.34,-25.794 5.58,-25.875C5.82,-25.955 6.155,-25.888 6.453,-25.824C6.945,-25.718 7.434,-25.532 7.893,-24.933C8.127,-24.627 8.13,-24.354 8.269,-24.111C8.415,-23.767 8.274,-23.546 8.459,-23.238C8.602,-23.001 8.929,-22.733 9.227,-22.434C9.541,-22.122 9.85,-21.751 10.066,-21.663C10.695,-21.41 11.882,-22.332 12.585,-23.152C12.896,-23.514 13.341,-24.357 13.218,-24.711C13.12,-24.998 12.784,-25.25 12.516,-25.515C12.246,-25.785 11.974,-26.136 11.712,-26.32C11.261,-26.636 10.695,-26.562 10.324,-26.818C9.72,-27.232 9.335,-27.914 9.212,-28.374C9.115,-28.741 9.207,-29.164 9.056,-29.522C8.923,-29.844 8.561,-30.147 8.305,-30.447C6.947,-32.023 5.241,-33.601 3.835,-33.991C2.024,-34.491 0.182,-34.473 -1.61,-34.265C-2.188,-34.199 -2.812,-34.056 -3.425,-33.957C-3.853,-33.887 -4.327,-33.736 -4.795,-33.614C-4.953,-33.573 -5.108,-33.57 -5.24,-33.511C-5.547,-33.379 -5.839,-33.118 -6.098,-32.929C-6.129,-32.904 -6.151,-32.91 -6.182,-32.879C-6.358,-32.694 -5.963,-32.539 -5.874,-32.502C-5.458,-32.33 -4.751,-32.419 -4.35,-32.416C-2.867,-32.401 -1.738,-32.498 -0.273,-32.244C0.037,-32.19 0.381,-32.063 0.734,-31.885C1.121,-31.691 1.553,-31.468 1.745,-31.183C1.877,-30.99 1.88,-30.568 1.799,-30.378C1.685,-30.121 1.306,-29.767 1.095,-29.504C0.844,-29.193 0.603,-28.856 0.394,-28.598C0.239,-28.407 0.025,-28.295 -0.053,-28.084C-0.176,-27.74 0.19,-27.507 0,-27.108" style="fill-rule:nonzero;"/>
+            </g>
+        </g>
+        <g transform="matrix(4.166667,0,0,4.166667,-1351,-638)">
+            <g transform="matrix(1.169252,0,0,1.169252,399.149757,413.416724)">
+                <path d="M0,49.951L-12.207,-0.001L-23.665,-0.001L-10.259,49.951L0,49.951ZM24.564,49.951L13.63,-0.001L2.846,-0.001L-3.07,25.238L1.423,44.034L7.414,18.872L14.304,49.951L24.564,49.951ZM22.093,25.238L26.287,44.558L39.992,-0.001L28.833,-0.001L22.093,25.238ZM62.458,41.114C54.819,40.439 51.15,35.272 51.15,25.238C51.15,14.753 54.819,9.36 62.458,8.761L62.458,-1.199C57.74,-1.274 53.921,-0.375 50.326,1.647C43.062,5.615 38.643,14.453 38.643,25.012C38.643,34.299 42.164,42.462 48.229,47.03C52.198,50.026 56.092,51.149 62.458,51.225L62.458,41.114ZM65.379,51.225C71.146,51.149 74.964,50.1 78.635,47.629C85.225,43.21 89.119,34.748 89.119,24.938C89.119,14.977 85.225,6.513 78.635,2.321C74.964,-0.001 70.622,-1.199 65.379,-1.199L65.379,8.761C72.868,9.285 76.612,14.603 76.612,24.862C76.612,35.047 72.644,40.814 65.379,41.114L65.379,51.225ZM115.855,41.114C108.216,40.439 104.546,35.272 104.546,25.238C104.546,14.753 108.216,9.36 115.855,8.761L115.855,-1.199C111.137,-1.274 107.317,-0.375 103.723,1.647C96.458,5.615 92.04,14.453 92.04,25.012C92.04,34.299 95.559,42.462 101.626,47.03C105.595,50.026 109.489,51.149 115.855,51.225L115.855,41.114ZM118.776,51.225C124.542,51.149 128.362,50.1 132.031,47.629C138.622,43.21 142.516,34.748 142.516,24.938C142.516,14.977 138.622,6.513 132.031,2.321C128.362,-0.001 124.019,-1.199 118.776,-1.199L118.776,8.761C126.265,9.285 130.009,14.603 130.009,24.862C130.009,35.047 126.04,40.814 118.776,41.114L118.776,51.225ZM158.617,-0.001L147.233,-0.001L147.233,49.951L158.617,49.951L158.617,-0.001ZM161.538,49.951L163.784,49.951C171.499,49.951 175.467,49.126 179.436,46.656C186.027,42.612 190.071,34.299 190.071,24.788C190.071,18.946 188.498,13.255 185.578,8.986C182.356,4.193 178.088,1.497 171.948,0.448C169.326,-0.001 169.101,-0.001 163.335,-0.001L161.538,-0.001L161.538,9.36L163.559,9.36C173.52,9.36 177.639,13.854 177.639,24.862C177.639,30.179 176.366,34.748 174.044,37.369C171.948,39.766 169.176,40.664 163.634,40.664L161.538,40.664L161.538,49.951ZM213.961,49.951L201.755,-0.001L190.295,-0.001L203.702,49.951L213.961,49.951ZM238.526,49.951L227.592,-0.001L216.808,-0.001L210.891,25.238L215.384,44.034L221.375,18.872L228.266,49.951L238.526,49.951ZM236.054,25.238L240.249,44.558L253.954,-0.001L242.794,-0.001L236.054,25.238ZM268.705,-0.001L257.322,-0.001L257.322,49.951L268.705,49.951L268.705,-0.001ZM294.393,40.589L271.626,40.589L271.626,49.951L294.393,49.951L294.393,40.589ZM288.402,19.32L271.627,19.32L271.627,28.308L288.402,28.308L288.402,19.32ZM294.169,-0.001L271.626,-0.001L271.626,9.36L294.169,9.36L294.169,-0.001ZM310.944,-0.001L299.561,-0.001L299.561,49.951L310.944,49.951L310.944,-0.001ZM343.221,49.951L326.522,29.057C335.059,28.083 340.001,22.841 340.001,14.828C340.001,8.686 337.231,3.818 332.363,1.572C329.592,0.298 326.746,-0.001 318.36,-0.001L313.865,-0.001L313.865,9.435L319.033,9.435C322.402,9.435 323.975,9.66 325.473,10.259C327.569,11.158 328.768,13.105 328.768,15.576C328.768,18.123 327.421,20.145 325.023,21.193C323.526,21.793 321.878,22.017 318.134,22.017L313.865,22.017L313.865,29.057L328.468,49.951L343.221,49.951ZM357.901,-0.001L346.517,-0.001L346.517,49.951L357.901,49.951L357.901,-0.001ZM360.821,49.951L363.069,49.951C370.782,49.951 374.749,49.126 378.72,46.656C385.31,42.612 389.356,34.299 389.356,24.788C389.356,18.946 387.783,13.255 384.861,8.986C381.641,4.193 377.371,1.497 371.232,0.448C368.611,-0.001 368.386,-0.001 362.619,-0.001L360.821,-0.001L360.821,9.36L362.844,9.36C372.803,9.36 376.922,13.854 376.922,24.862C376.922,30.179 375.649,34.748 373.328,37.369C371.232,39.766 368.46,40.664 362.918,40.664L360.821,40.664L360.821,49.951Z" style="fill-rule:nonzero;"/>
+            </g>
+        </g>
+        <g transform="matrix(4.166667,0,0,4.166667,-1351,-638)">
+            <g transform="matrix(1.169252,0,0,1.169252,-101.248598,-157.0458)">
+                <path d="M544.758,449.661L542.543,449.661L542.543,459.382L544.758,459.382L544.758,449.661ZM549.756,457.56L545.326,457.56L545.326,459.382L549.756,459.382L549.756,457.56ZM548.591,453.421L545.326,453.421L545.326,455.17L548.591,455.17L548.591,453.421ZM549.712,449.661L545.326,449.661L545.326,451.483L549.712,451.483L549.712,449.661ZM556.431,459.629L556.431,457.763C555.236,457.719 554.769,457.283 554.682,456.16L552.438,456.248C552.453,457.006 552.627,457.603 552.963,458.142C553.545,459.046 554.828,459.629 556.271,459.629L556.431,459.629ZM556.985,459.629C559.288,459.629 560.745,458.39 560.745,456.452C560.745,455.578 560.454,454.893 559.856,454.397C559.346,453.96 558.544,453.669 556.97,453.304C555.717,453.012 555.63,452.984 555.353,452.78C555.178,452.648 555.061,452.401 555.061,452.138C555.061,451.584 555.557,451.249 556.431,451.206L556.431,449.413C554.216,449.399 552.817,450.55 552.817,452.372C552.817,453.392 553.24,454.149 554.07,454.631C554.624,454.966 554.974,455.082 556.358,455.388C557.393,455.621 557.743,455.738 558.034,455.913C558.311,456.073 558.5,456.408 558.5,456.743C558.5,457.414 557.99,457.749 556.985,457.763L556.985,459.629ZM560.643,452.547C560.454,450.506 559.258,449.486 556.985,449.413L556.985,451.206C557.917,451.249 558.369,451.716 558.428,452.692L560.643,452.547ZM568.731,459.381L568.731,451.555L571.66,451.555L571.66,449.661L563.645,449.661L563.645,451.555L566.516,451.555L566.516,459.381L568.731,459.381ZM572.521,459.381L574.604,459.381L574.604,457.312L572.521,457.312L572.521,459.381ZM646.009,459.381L652.552,459.381L652.552,457.617L646.009,457.617L646.009,459.381ZM649.622,451.555C650.249,451.555 650.585,451.92 650.585,452.59C650.585,453.202 650.337,453.77 649.783,454.441C649.316,455.009 649.229,455.096 648.062,456.059C646.927,456.991 646.927,456.991 646.796,457.108L649.434,457.108C651.619,455.403 652.566,454.004 652.566,452.473C652.566,450.841 651.386,449.719 649.622,449.69L649.622,451.555ZM649.098,449.69C647.218,449.792 646.096,450.972 646.096,452.838C646.096,452.984 646.096,453.071 646.11,453.275L648.077,453.377L648.077,453.246C648.049,452.066 648.311,451.628 649.098,451.541L649.098,449.69ZM658.498,457.778C657.405,457.735 657.026,456.947 657.026,454.733C657.026,452.415 657.42,451.511 658.498,451.409L658.498,449.69C657.682,449.719 657.216,449.836 656.734,450.185C655.568,451.002 655.016,452.488 655.016,454.776C655.016,456.729 655.466,458.07 656.399,458.843C656.953,459.308 657.521,459.484 658.498,459.484L658.498,457.778ZM659.022,459.484C659.839,459.484 660.378,459.352 660.873,459.031C661.951,458.318 662.491,456.86 662.491,454.718C662.491,453.464 662.301,452.357 661.98,451.672C661.587,450.826 660.961,450.185 660.246,449.894C659.882,449.748 659.576,449.69 659.022,449.69L659.022,451.409C660.058,451.483 660.495,452.415 660.495,454.587C660.495,456.933 660.144,457.706 659.022,457.778L659.022,459.484ZM665.23,449.88L665.23,451.847L666.834,451.847L666.834,449.85L665.23,449.88ZM667.358,449.85L667.358,459.381L669.429,459.381L669.429,449.806L667.358,449.85ZM677.065,459.381L679.002,459.381L679.002,457.486L680.301,457.486L680.301,455.797L679.002,455.797L679.002,450.885L677.065,453.523L677.065,459.381ZM676.54,455.797L674.747,455.797L679.148,449.806L677.094,449.806L672.852,455.635L672.852,457.486L676.54,457.486L676.54,455.797Z" style="fill-rule:nonzero;"/>
+            </g>
+        </g>
+        <g transform="matrix(4.166667,0,0,4.166667,-1351,-638)">
+            <g transform="matrix(1.650947,0,0,1.650947,548.463002,510.573781)">
+                <path d="M0,-8.593L0,0L2.491,0C5.145,0 6.877,-1.787 6.877,-4.26L6.877,-4.297C6.877,-6.77 5.145,-8.593 2.491,-8.593L0,-8.593ZM-2.22,-10.614L2.491,-10.614C6.462,-10.614 9.206,-7.889 9.206,-4.333L9.206,-4.297C9.206,-0.74 6.462,2.021 2.491,2.021L-2.22,2.021L-2.22,-10.614Z" style="fill-rule:nonzero;"/>
+            </g>
+        </g>
+        <g transform="matrix(4.166667,0,0,4.166667,-1351,-638)">
+            <g transform="matrix(1.650947,0,0,1.650947,574.060772,513.91117)">
+                <path d="M0,-12.636L9.369,-12.636L9.369,-10.651L2.22,-10.651L2.22,-7.365L8.556,-7.365L8.556,-5.38L2.22,-5.38L2.22,-1.986L9.459,-1.986L9.459,0L0,0L0,-12.636Z" style="fill-rule:nonzero;"/>
+            </g>
+        </g>
+        <g transform="matrix(4.166667,0,0,4.166667,-1351,-638)">
+            <g transform="matrix(1.650947,0,0,1.650947,598.586251,496.089857)">
+                <path d="M0,8.953L1.335,7.365C2.545,8.411 3.772,9.007 5.325,9.007C6.697,9.007 7.563,8.357 7.563,7.419L7.563,7.383C7.563,6.48 7.058,5.993 4.711,5.451C2.021,4.801 0.505,4.007 0.505,1.679L0.505,1.642C0.505,-0.524 2.311,-2.022 4.819,-2.022C6.661,-2.022 8.123,-1.463 9.404,-0.434L8.213,1.245C7.076,0.397 5.938,-0.054 4.783,-0.054C3.484,-0.054 2.726,0.614 2.726,1.444L2.726,1.48C2.726,2.454 3.303,2.888 5.74,3.466C8.412,4.116 9.784,5.072 9.784,7.166L9.784,7.202C9.784,9.567 7.924,10.975 5.271,10.975C3.339,10.975 1.516,10.307 0,8.953" style="fill-rule:nonzero;"/>
+            </g>
+        </g>
+        <g transform="matrix(4.166667,0,0,4.166667,-1351,-638)">
+            <g transform="matrix(1.650947,0,0,1.650947,-300.641369,-64.635828)">
+                <rect x="560.81" y="337.797" width="2.22" height="12.636"/>
+            </g>
+        </g>
+        <g transform="matrix(4.166667,0,0,4.166667,-1351,-638)">
+            <g transform="matrix(1.650947,0,0,1.650947,639.499691,503.421053)">
+                <path d="M0,0.072L0,0.036C0,-3.502 2.708,-6.499 6.517,-6.499C8.719,-6.499 10.073,-5.885 11.372,-4.784L9.964,-3.105C8.99,-3.935 8.033,-4.459 6.426,-4.459C4.098,-4.459 2.329,-2.419 2.329,-0L2.329,0.036C2.329,2.635 4.043,4.549 6.625,4.549C7.816,4.549 8.899,4.17 9.675,3.592L9.675,1.227L6.444,1.227L6.444,-0.704L11.824,-0.704L11.824,4.603C10.578,5.668 8.791,6.571 6.553,6.571C2.6,6.571 0,3.754 0,0.072" style="fill-rule:nonzero;"/>
+            </g>
+        </g>
+        <g transform="matrix(4.166667,0,0,4.166667,-1351,-638)">
+            <g transform="matrix(1.650947,0,0,1.650947,669.746363,513.91117)">
+                <path d="M0,-12.636L2.058,-12.636L8.827,-3.899L8.827,-12.636L11.011,-12.636L11.011,0L9.152,0L2.184,-8.99L2.184,0L0,0L0,-12.636Z" style="fill-rule:nonzero;"/>
+            </g>
+        </g>
+    </g>
+</svg>
+    <span class="tagline">Think · Design · Style</span>
+    <span class="lastline" id="lastline">09:40:52  Stop  esp-ctrl  finished after 6 min</span>
+    <span class="ver">v0.1 draft</span>
+  </footer>
+
+  <!-- Settings sheet: covers the Glance column only -->
+  <aside class="sheet" id="sheet">
+    <h2>Settings</h2>
+    <div class="k">Theme</div>
+    <div class="seg" id="seg-theme">
+      <button data-t="auto" aria-pressed="true">System</button><button data-t="light" aria-pressed="false">Light</button><button data-t="dark" aria-pressed="false">Dark</button>
+    </div>
+    <div class="k">Status</div>
+    <div class="kv"><span>Session hooks</span><span class="v" id="kv-hooks"><span class="dot"></span>installed</span></div>
+    <div class="kv"><span>Accessibility</span><span class="v" id="kv-ax"><span class="dot"></span>granted</span></div>
+    <div class="kv"><span>Touch driver</span><span class="v"><span class="dot"></span>running</span></div>
+    <div class="kv"><span>Push to talk</span><span class="v">Ctrl + Opt + T</span></div>
+    <div class="spacer"></div>
+    <button class="btn stop" id="quit">Quit Corsair Ctrl</button>
+    <button class="btn" id="close-settings">Done</button>
+  </aside>
+</div>
+
+</div></div></div>
+
+<p class="note">Design draft, not the working panel. The selectors above switch states for review and are not part of the product. The panel is drawn at its true 2560 × 720 pixels and scaled to fit this window. Add <code>?kiosk=1</code> to the address to show the panel alone at true size, for viewing on the Edge itself. Hold the black bar to see the listening state.</p>
+
+<script>
+const $ = id => document.getElementById(id);
+const S = { board: "typical", voice: "ready", glance: "live", page: 0 };
+
+/* Sample sessions. state: needs | working | done | idle */
+const SETS = {
+  typical: [
+    { st: "needs",   nm: "edge-ctrl",        la: "Wants to run: bash panel/build.sh", t: "2 min", id: "3a4b7578" },
+    { st: "needs",   nm: "woodwerd-website", la: "Question: publish to the live site or the preview?", t: "11 min", id: "c81e02aa" },
+    { st: "working", nm: "esp-ctrl",         la: "Editing site/app.js", t: "38 s", id: "7f20d1c4" },
+    { st: "working", nm: "media-ctrl",       la: "Running the test suite", t: "4 min", id: "19be66f0" },
+    { st: "done",    nm: "cyd-flow-ctrl",    la: "Release notes for v1.1.0 are written.", t: "6 min", id: "a04c93e1" },
+    { st: "idle",    nm: "icon-ctrl",        la: "Session started", t: "1 h", id: "5d77b012" },
+  ],
+  quiet: [
+    { st: "done", nm: "esp-ctrl",      la: "Board read page updated and tested.", t: "14 min", id: "7f20d1c4" },
+    { st: "idle", nm: "icon-ctrl",     la: "Session started", t: "1 h", id: "5d77b012" },
+    { st: "idle", nm: "file-ctrl",     la: "Session started", t: "3 h", id: "e1139a7b" },
+  ],
+  empty: [], nohooks: [],
+};
+SETS.overflow = SETS.typical.slice(0, 5).concat([
+  { st: "done", nm: "werd-player",  la: "Playlist import fixed.", t: "22 min", id: "44d0a9c2" },
+  { st: "done", nm: "photo-ctrl",   la: "Contact sheet exported.", t: "41 min", id: "b7e3105d" },
+  { st: "idle", nm: "icon-ctrl",    la: "Session started", t: "1 h", id: "5d77b012" },
+  { st: "idle", nm: "file-ctrl",    la: "Session started", t: "3 h", id: "e1139a7b" },
+  { st: "idle", nm: "next-ctrl",    la: "Session started", t: "3 h", id: "0c5fa2d8" },
+  { st: "idle", nm: "stack-ctrl",   la: "Session started", t: "5 h", id: "91aa47ce" },
+]);
+const LABEL = { needs: "Needs you", working: "Working", done: "Done", idle: "Idle" };
+const DOT = { needs: "dot attention", working: "dot pulse", done: "dot", idle: "dot idle" };
+const ORDER = { needs: 0, working: 1, done: 2, idle: 3 };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function renderBoard() {
+  const board = $("board"), band = $("s-board");
+  const list = [...SETS[S.board]].sort((a, b) => ORDER[a.st] - ORDER[b.st]);
+  $("i-hooks").className = "dot"; $("v-hooks").textContent = "receiving";
+  $("kv-hooks").innerHTML = S.board === "nohooks" ? `<span class="dot attention"></span>not installed` : `<span class="dot"></span>installed`;
+  if (S.board === "nohooks") {
+    $("i-hooks").className = "dot attention"; $("v-hooks").textContent = "not set up";
+    band.innerHTML = `<span class="dot attention"></span>Not set up`;
+    board.innerHTML = `<div class="empty"><div class="h">Session hooks are not installed</div>
+      <div class="b">Corsair Ctrl cannot see Claude Code sessions until its hooks are added. Open Settings and choose Install hooks, then send a prompt in any session.</div></div>`;
+    return;
+  }
+  if (!list.length) {
+    band.innerHTML = `<span class="dot idle"></span>No sessions`;
+    board.innerHTML = `<div class="empty"><div class="h">No sessions yet</div>
+      <div class="b">A card appears here when a Claude Code session starts or you send it a prompt.</div></div>`;
+    return;
+  }
+  const needs = list.filter(s => s.st === "needs").length;
+  const working = list.filter(s => s.st === "working").length;
+  band.innerHTML = needs
+    ? `<span class="dot attention"></span>${needs} ${needs === 1 ? "needs" : "need"} you`
+    : working ? `<span class="dot pulse"></span>${working} working` : `<span class="dot"></span>Nothing waiting`;
+
+  /* Eight slots, no paging: the eight most recently active sessions, most urgent first. */
+  const shown = [...SETS[S.board]].slice(0, 8).sort((a, b) => ORDER[a.st] - ORDER[b.st]);
+  board.innerHTML = `<div class="cards">${shown.map(s => `
+    <button class="card ${s.st}">
+      <span class="st"><span class="${DOT[s.st]}"></span>${LABEL[s.st]}</span>
+      <span class="nm">${esc(s.nm)}</span>
+      <span class="la">${esc(s.la)}</span>
+      <span class="mt"><span>${esc(s.t)}</span><span>${esc(s.id)}</span></span>
+    </button>`).join("")}</div>`;
+}
+
+let hfTimer = null, hfStart = 0;
+const VOICE_IDS = ["send", "sendnow", "discard", "talk", "hf", "newchat"];
+function renderVoice() {
+  const v = $("voice"), band = $("s-voice"), cue = $("cue"), hf = $("hf");
+  v.classList.remove("holding", "handsfree");
+  clearInterval(hfTimer);
+  hf.classList.remove("on");
+  for (const id of VOICE_IDS) $(id).disabled = false;
+  $("i-wispr").className = "dot"; $("v-wispr").textContent = "ready";
+  $("f-dot").className = "dot";
+  $("lands").innerHTML = `Lands in <b>${frontApp()}</b>`;
+  $("kv-ax").innerHTML = S.voice === "nokeys" ? `<span class="dot attention"></span>not granted` : `<span class="dot"></span>granted`;
+  if (S.voice === "ready") { band.innerHTML = `<span class="dot"></span>Ready`; cue.textContent = "Hold to talk"; }
+  if (S.voice === "holding") {
+    v.classList.add("holding"); band.innerHTML = `<span class="dot pulse"></span>Listening`;
+    cue.textContent = "Listening · release to paste"; $("send").disabled = true; $("sendnow").disabled = true;
+  }
+  if (S.voice === "handsfree") {
+    v.classList.add("handsfree"); hf.classList.add("on"); $("f-dot").className = "dot fault";
+    band.innerHTML = `<span class="dot fault"></span>Hands-free`;
+    hfStart = Date.now() - 134000;
+    const tick = () => { const s = Math.floor((Date.now() - hfStart) / 1000); cue.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")} · tap to stop`; };
+    tick(); hfTimer = setInterval(tick, 1000);
+  }
+  if (S.voice === "nokeys") {
+    band.innerHTML = `<span class="dot attention"></span>Needs permission`;
+    $("i-wispr").className = "dot attention"; $("v-wispr").textContent = "no permission";
+    $("f-dot").className = "dot attention";
+    $("lands").innerHTML = `<b>Cannot send keys yet</b>`;
+    cue.textContent = "Allow Accessibility in Settings";
+    for (const id of VOICE_IDS) $(id).disabled = true;
+  }
+}
+
+/* Sample apps. In the real app the tiles show each app's own icon. */
+const APPS = [
+  { nm: "Claude", ico: "C", st: "front" },
+  { nm: "Fusion", ico: "F", st: "running" },
+  { nm: "Chrome", ico: "G", st: "running" },
+  { nm: "Finder", ico: "Fi", st: "running" },
+];
+function renderApps() {
+  $("apps").innerHTML = APPS.map((a, i) => `
+    <button class="app ${a.st === "front" ? "front" : a.st === "off" ? "off" : ""}" data-i="${i}" aria-label="Switch to ${a.nm}">
+      ${a.st === "off" ? `<span class="dot idle"></span>` : ""}
+      <span class="ico">${a.ico}</span><span class="nm">${a.nm}</span>
+    </button>`).join("");
+  document.querySelectorAll("#apps .app").forEach(b => b.onclick = () => {
+    APPS.forEach(a => { if (a.st === "front") a.st = "running"; });
+    APPS[+b.dataset.i].st = "front"; renderApps(); renderVoice();
+  });
+}
+const frontApp = () => (APPS.find(a => a.st === "front") || { nm: "TextEdit" }).nm;
+
+function renderGlance() {
+  const stale = S.glance === "stale";
+  $("stale").hidden = !stale;
+  $("s-glance").innerHTML = stale ? `<span class="dot idle"></span>Offline` : `<span class="dot"></span>Live`;
+}
+
+function clock() {
+  const d = new Date();
+  let h = d.getHours(); const ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12;
+  $("clock").innerHTML = `${h}:${String(d.getMinutes()).padStart(2, "0")}<small>${ap}</small>`;
+  $("date").textContent = d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+}
+
+function setTheme(t) {
+  document.documentElement.dataset.theme = t; $("r-theme").value = t;
+  document.querySelectorAll("#seg-theme button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === t)));
+  try { localStorage.setItem("edgectrl-theme", t); } catch (e) {}
+}
+
+function fit() {
+  const kiosk = document.body.classList.contains("kiosk");
+  const full = kiosk || $("r-size").value === "full";
+  const w = $("stage").clientWidth - (kiosk ? 0 : 32);
+  const k = full ? 1 : Math.min(1, w / 2560);
+  $("scaler").style.transform = `scale(${k})`;
+  $("scaler").style.width = "2560px";
+  $("stage").style.height = (720 * k + (kiosk ? 0 : 32)) + "px";
+  $("stage").style.overflowX = full && !kiosk ? "auto" : "hidden";
+}
+
+/* Wiring */
+$("r-theme").onchange = e => setTheme(e.target.value);
+$("r-board").onchange = e => { S.board = e.target.value; S.page = 0; renderBoard(); };
+$("r-voice").onchange = e => { S.voice = e.target.value; renderVoice(); };
+$("r-apps").onchange = e => { APPS[1].st = e.target.value === "off" ? "off" : "running"; renderApps(); };
+$("r-glance").onchange = e => { S.glance = e.target.value; renderGlance(); };
+$("r-sheet").onchange = e => $("sheet").classList.toggle("open", e.target.value === "open");
+$("r-reserve").onchange = e => { const r = $("reserve"); const on = e.target.value === "show"; r.classList.toggle("show", on); r.textContent = on ? "macOS menu bar covers this strip — nothing lives here" : ""; };
+$("r-size").onchange = fit;
+document.querySelectorAll("#seg-theme button").forEach(b => b.onclick = () => setTheme(b.dataset.t));
+$("open-settings").onclick = () => { $("sheet").classList.add("open"); $("r-sheet").value = "open"; };
+$("close-settings").onclick = () => { $("sheet").classList.remove("open"); $("r-sheet").value = "closed"; };
+$("hf").onclick = () => { S.voice = S.voice === "handsfree" ? "ready" : "handsfree"; $("r-voice").value = S.voice; renderVoice(); };
+const talk = $("talk");
+talk.addEventListener("pointerdown", () => {
+  if (S.voice === "handsfree") { S.voice = "ready"; } else if (S.voice === "ready") { S.voice = "holding"; }
+  $("r-voice").value = S.voice; renderVoice();
+});
+const release = () => { if (S.voice === "holding") { S.voice = "ready"; $("r-voice").value = "ready"; renderVoice(); } };
+talk.addEventListener("pointerup", release); talk.addEventListener("pointerleave", release); talk.addEventListener("pointercancel", release);
+
+if (new URLSearchParams(location.search).has("kiosk")) document.body.classList.add("kiosk");
+let saved = "auto"; try { saved = localStorage.getItem("edgectrl-theme") || "auto"; } catch (e) {}
+setTheme(new URLSearchParams(location.search).get("theme") || saved);
+renderApps(); renderBoard(); renderVoice(); renderGlance(); clock(); setInterval(clock, 1000);
+addEventListener("resize", fit); fit();
+
+/* When shown inside the Corsair Ctrl app, report what actually rendered to its log. */
+const bridge = window.webkit?.messageHandlers?.edge;
+if (bridge) {
+  window.onerror = (m, src, line) => bridge.postMessage({ action: "debug", text: `JS error: ${m} @${line}` });
+  Promise.all([...document.fonts].map(f => f.load().then(() => `${f.family} ${f.weight} ok`, e => `${f.family} ${f.weight} FAILED`)))
+    .then(r => bridge.postMessage({ action: "debug", text: `fonts: ${r.join(" | ")} · body uses ${getComputedStyle(document.body).fontFamily.split(",")[0]} · ${innerWidth}x${innerHeight} @${devicePixelRatio}x` }));
+}
+</script>
+</body>
+</html>

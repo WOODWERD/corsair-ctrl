@@ -1,0 +1,153 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Edge Ctrl spike</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #0e0e0e; color: #ececec; overflow: hidden;
+    font-family: -apple-system, "Inter", sans-serif; -webkit-user-select: none; cursor: default; }
+  body { width: 2560px; height: 720px; transform-origin: 0 0; }
+  .grid { display: grid; grid-template-columns: 374px 1582px 604px; height: 720px; }
+  .zone { padding: 28px; border-right: 1px solid #262626; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+  .zone:last-child { border-right: 0; }
+  .label { font-size: 18px; color: #8a8a8a; }
+  .clock { font-size: 84px; font-weight: 500; letter-spacing: -1px; }
+  .muted { color: #8a8a8a; font-size: 20px; }
+  .focus { font-size: 22px; padding: 14px 16px; border-radius: 10px; background: #1b1b1b; }
+  .focus.bad { background: #4a1414; color: #ffb4b4; }
+  .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; flex: 1; align-content: start; }
+  .card { border-radius: 14px; padding: 20px; height: 230px; display: flex; flex-direction: column; gap: 10px; background: #1b1b1b; }
+  .card .st { font-size: 18px; font-weight: 500; }
+  .card .name { font-size: 30px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .last { font-size: 19px; color: #b5b5b5; flex: 1; overflow: hidden; }
+  .card .age { font-size: 17px; color: #8a8a8a; }
+  .needs { background: #4a3708; } .needs .st { color: #ffcf6b; }
+  .working { background: #0f2c4a; } .working .st { color: #8cc4ff; }
+  .done { background: #10361f; } .done .st { color: #8fe0ab; }
+  .idle .st { color: #9a9a9a; }
+  .empty { font-size: 24px; color: #8a8a8a; padding: 20px 0; }
+  .log { font-family: ui-monospace, Menlo, monospace; font-size: 15px; color: #9a9a9a; height: 150px; overflow: hidden; line-height: 1.45; }
+  .btn { border-radius: 14px; background: #1f1f1f; display: flex; align-items: center; justify-content: center;
+    font-size: 26px; font-weight: 500; }
+  .btn:active, .btn.on { background: #3a3a3a; }
+  .talk { flex: 1; font-size: 34px; }
+  .talk.on { background: #5a2a1c; color: #ffc7b4; }
+  .row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .row .btn { height: 96px; }
+</style>
+</head>
+<body>
+<div class="grid">
+  <section class="zone">
+    <div class="label">Glance</div>
+    <div class="clock" id="clock">--:--</div>
+    <div class="muted" id="date"></div>
+    <div class="muted">Weather: after spike</div>
+    <div style="flex:1"></div>
+    <div class="label">Front app</div>
+    <div class="focus" id="front">?</div>
+    <div class="muted" id="res"></div>
+  </section>
+
+  <section class="zone">
+    <div class="label">Claude Code sessions · tap to bring Claude forward</div>
+    <div class="cards" id="cards"></div>
+    <div class="label">Event log</div>
+    <div class="log" id="log"></div>
+  </section>
+
+  <section class="zone">
+    <div class="label">Voice · Wispr Flow</div>
+    <div class="btn talk" id="talk">Hold to talk</div>
+    <div class="row">
+      <div class="btn" data-key="handsFree">Hands-free</div>
+      <div class="btn" data-key="stop">Stop</div>
+      <div class="btn" data-key="send">Send</div>
+      <div class="btn" data-key="discard">Discard</div>
+    </div>
+    <div class="row" style="grid-template-columns: 1fr;">
+      <div class="btn" data-key="newChat">New chat (Opt+Space)</div>
+    </div>
+    <div class="muted" id="touch">Last touch: —</div>
+  </section>
+</div>
+
+<script>
+const post = m => window.webkit?.messageHandlers?.edge?.postMessage(m);
+const ORDER = { needs: 0, working: 1, done: 2, idle: 3 };
+const LABEL = { needs: "Needs you", working: "Working", done: "Done", idle: "Idle" };
+let state = { sessions: [], events: [], front: "?", stolen: 0 };
+
+function fit() {
+  document.body.style.transform = `scale(${innerWidth / 2560})`;
+  document.getElementById("res").textContent =
+    `${screen.width}×${screen.height} pt · ${devicePixelRatio}x`;
+}
+addEventListener("resize", fit); fit();
+
+function age(t) {
+  const s = Math.max(0, Math.round(Date.now() / 1000 - t));
+  return s < 60 ? `${s}s` : s < 3600 ? `${Math.round(s / 60)}m` : `${Math.round(s / 3600)}h`;
+}
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function render() {
+  const cards = document.getElementById("cards");
+  const list = [...state.sessions].sort((a, b) => (ORDER[a.state] - ORDER[b.state]) || (b.since - a.since));
+  cards.innerHTML = list.length ? list.slice(0, 8).map(s => `
+    <div class="card ${s.state}" data-id="${esc(s.id)}">
+      <div class="st">${LABEL[s.state] || s.state}</div>
+      <div class="name">${esc((s.cwd || "").split("/").pop() || s.id.slice(0, 8))}</div>
+      <div class="last">${esc(s.last)}</div>
+      <div class="age">${age(s.since)} · ${esc(s.id.slice(0, 8))}</div>
+    </div>`).join("")
+    : `<div class="empty">No sessions yet. Send a prompt in a Claude Code session.</div>`;
+  cards.querySelectorAll(".card").forEach(el => el.onclick = () => post({ action: "jump", id: el.dataset.id }));
+
+  document.getElementById("log").innerHTML = state.events.map(e =>
+    `${new Date(e.t * 1000).toLocaleTimeString()}  ${esc(e.kind).padEnd(16, " ")} ${esc(e.detail)}`).join("<br>");
+
+  const f = document.getElementById("front");
+  f.textContent = `${state.front}` + (state.stolen ? ` · panel took focus ${state.stolen}×` : "");
+  f.classList.toggle("bad", state.stolen > 0);
+}
+let lastCount = -1;
+window.onerror = (msg, src, line) => post({ action: "debug", text: `JS error: ${msg} @${line}` });
+window.edgeUpdate = d => {
+  state = d; render();
+  const n = document.querySelectorAll("#cards .card").length;
+  if (n !== lastCount) { lastCount = n; post({ action: "debug", text: `cards shown: ${n} of ${d.sessions.length} sessions` }); }
+};
+
+function tick() {
+  const d = new Date();
+  document.getElementById("clock").textContent = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  document.getElementById("date").textContent = d.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
+  render();
+}
+setInterval(tick, 1000); tick();
+
+let downAt = 0;
+function timing(label) {
+  const ms = Math.round(performance.now() - downAt);
+  const t = `${label}: down→up ${ms} ms`;
+  document.getElementById("touch").textContent = `Last touch · ${t}`;
+  post({ action: "touch", text: t });
+}
+
+const talk = document.getElementById("talk");
+let holding = false;
+talk.addEventListener("pointerdown", () => { downAt = performance.now(); holding = true; talk.classList.add("on"); post({ action: "key", name: "pttDown" }); });
+const release = () => { if (!holding) return; holding = false; talk.classList.remove("on"); post({ action: "key", name: "pttUp" }); timing("Hold to talk"); };
+talk.addEventListener("pointerup", release);
+talk.addEventListener("pointerleave", release);
+talk.addEventListener("pointercancel", release);
+
+document.querySelectorAll("[data-key]").forEach(el => {
+  el.addEventListener("pointerdown", () => { downAt = performance.now(); });
+  el.addEventListener("pointerup", () => { post({ action: "key", name: el.dataset.key }); timing(el.textContent); });
+});
+</script>
+</body>
+</html>
