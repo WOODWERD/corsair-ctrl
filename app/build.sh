@@ -28,12 +28,13 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>CFBundleDisplayName</key><string>Corsair Ctrl</string>
   <key>CFBundleExecutable</key><string>CorsairCtrl</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.1.0</string>
+  <key>CFBundleShortVersionString</key><string>0.3.1</string>
   <key>CFBundleVersion</key><string>1</string>
   <key>LSUIElement</key><true/>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
-  <key>NSCalendarsFullAccessUsageDescription</key><string>Corsair Ctrl shows your next calendar event on the Edge panel.</string>
-  <key>NSCalendarsUsageDescription</key><string>Corsair Ctrl shows your next calendar event on the Edge panel.</string>
+  <key>NSAppleEventsUsageDescription</key><string>Corsair Ctrl shows what is playing in Spotify and Music, and controls playback from the Edge panel.</string>
+  <key>NSCalendarsFullAccessUsageDescription</key><string>Corsair Ctrl shows your next calendar event on the Corsair panel.</string>
+  <key>NSCalendarsUsageDescription</key><string>Corsair Ctrl shows your next calendar event on the Corsair panel.</string>
 </dict>
 </plist>
 PLIST

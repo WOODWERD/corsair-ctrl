@@ -1,5 +1,5 @@
 // Corsair Ctrl — agent panel for the Corsair XENEON EDGE.
-// A non-activating floating panel on the Edge that shows Claude Code sessions, jumps
+// A non-activating floating panel on the Corsair that shows Claude Code sessions, jumps
 // between apps, and sends the Wispr Flow voice keys. See ../../spec.md.
 
 import Cocoa
@@ -8,7 +8,7 @@ import ServiceManagement
 import ApplicationServices
 
 let PORT: UInt16 = 47616
-let VERSION = "0.1.0"
+let VERSION = "0.3.1"
 let CLAUDE_BUNDLE = "com.anthropic.claudefordesktop"
 
 struct Config: Codable {
@@ -29,20 +29,24 @@ struct Config: Codable {
 }
 
 final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavigationDelegate {
-    private var panel: EdgePanel!
-    private var web: EdgeWeb!
+    private var panel: CorsairPanel!
+    private var web: CorsairWeb!
     private let store: SessionStore
     private let hooks: Hooks
     private let apps: Apps
     private let glance: Glance
     private let keys = Keys()
+    private let links = SessionLinks()
+    private let media = Media()
     private var server: Server?
     private var front = NSWorkspace.shared.frontmostApplication
     private var touchRunning = false
+    private var iconsSent: Set<String> = []
     private var loginEnabled = false
     private var lastLine = ""
     private var pageReady = false
     private var pushQueued = false
+    private var titlesAt = 0.0
     private let clock: DateFormatter = { let f = DateFormatter(); f.dateFormat = "HH:mm:ss"; return f }()
 
     override init() {
@@ -73,7 +77,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
         })
         if server == nil { Log.write("[fatal] cannot create the local listener"); NSApp.terminate(nil); return }
 
-        panel = EdgePanel(contentRect: NSRect(x: 0, y: 0, width: 2560, height: 720),
+        panel = CorsairPanel(contentRect: NSRect(x: 0, y: 0, width: 2560, height: 720),
                           styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
@@ -84,7 +88,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
 
         let cfg = WKWebViewConfiguration()
         cfg.userContentController.add(self, name: "ctrl")
-        web = EdgeWeb(frame: panel.contentLayoutRect, configuration: cfg)
+        web = CorsairWeb(frame: panel.contentLayoutRect, configuration: cfg)
         web.autoresizingMask = [.width, .height]
         web.navigationDelegate = self
         panel.contentView = web
@@ -94,6 +98,9 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
         place()
         observe()
         glance.onChange = { [weak self] in self?.push() }
+        media.onChange = { [weak self] in self?.push() }
+        media.onNote = { [weak self] line in self?.note(line) }
+        media.start()
         glance.refreshWeather()
         glance.refreshCalendar()
         refreshStatus()
@@ -106,22 +113,22 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
 
     // MARK: Screen
 
-    /// The Edge is the very wide screen (2560 × 720 is 3.56:1). EDGE_SCREEN=<n> forces one.
-    private func edgeScreen() -> NSScreen? {
-        if let v = ProcessInfo.processInfo.environment["EDGE_SCREEN"], let i = Int(v), i < NSScreen.screens.count {
+    /// The Corsair is the very wide screen (2560 × 720 is 3.56:1). CORSAIR_SCREEN=<n> forces one.
+    private func corsairScreen() -> NSScreen? {
+        if let v = ProcessInfo.processInfo.environment["CORSAIR_SCREEN"], let i = Int(v), i < NSScreen.screens.count {
             return NSScreen.screens[i]
         }
         return NSScreen.screens.first { $0.frame.width / $0.frame.height > 3.2 }
     }
 
-    /// Show on the Edge. With no Edge attached, hide rather than cover another display.
+    /// Show on the Corsair. With no Corsair attached, hide rather than cover another display.
     private func place() {
-        if let s = edgeScreen() {
+        if let s = corsairScreen() {
             panel.setFrame(s.frame, display: true)
             panel.orderFrontRegardless()
         } else if panel.isVisible {
             panel.orderOut(nil)
-            Log.write("[screen] no Edge display found; panel hidden")
+            Log.write("[screen] no Corsair display found; panel hidden")
         }
     }
 
@@ -149,8 +156,19 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
 
     // MARK: Status
 
+    /// Picks up chat names from the Claude app for the cards on the board. A name
+    /// appears a little after a session's first prompt and can be changed later, so
+    /// this runs on the status timer and, no more than every three seconds, on events.
+    private func refreshTitles(force: Bool = false) {
+        let now = CFAbsoluteTimeGetCurrent()
+        guard force || now - titlesAt > 3 else { return }
+        titlesAt = now
+        links.refreshTitles(store.top.map(\.id)) { [weak self] changed in if changed { self?.push() } }
+    }
+
     private func refreshStatus() {
         hooks.refresh()
+        refreshTitles(force: true)
         DispatchQueue.global(qos: .utility).async { [weak self] in
             let p = Process()
             p.executableURL = URL(fileURLWithPath: "/usr/bin/pgrep")
@@ -178,14 +196,14 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
 
     private func hookEvent(_ body: Data) {
         guard let j = (try? JSONSerialization.jsonObject(with: body)) as? [String: Any] else { return }
-        if let line = store.handle(j) { note(line) }
+        if let line = store.handle(j) { note(line); refreshTitles() }
     }
 
     // MARK: Page bridge
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         pageReady = true
-        send("ctrlIcons", apps.icons())
+        iconsSent = []
         push()
     }
 
@@ -209,13 +227,24 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
         }
     }
 
+    /// Sends the icon for any app the page has not been given yet.
+    private func syncIcons(_ list: [[String: Any]]) {
+        let wanted = list.compactMap { $0["id"] as? String }.filter { !iconsSent.contains($0) }
+        guard !wanted.isEmpty else { return }
+        iconsSent.formUnion(wanted)
+        apps.icons(for: wanted) { [weak self] found in self?.send("ctrlIcons", found) }
+    }
+
     private func snapshot() -> [String: Any] {
-        [
+        let appList = apps.state(frontID: front?.bundleIdentifier ?? "")
+        syncIcons(appList)
+        return [
             "version": VERSION,
             "theme": UserDefaults.standard.string(forKey: "theme") ?? "auto",
-            "sessions": store.top.map { ["id": $0.id, "name": SessionStore.folder($0), "state": $0.state,
+            "sessions": store.top.map { ["id": $0.id, "name": SessionStore.folder($0),
+                                         "title": links.title(for: $0.id) ?? "", "state": $0.state,
                                          "since": $0.since, "last": $0.last] },
-            "apps": apps.state(frontID: front?.bundleIdentifier ?? ""),
+            "apps": appList,
             "front": front?.localizedName ?? "",
             "status": [
                 "hooks": hooks.installed, "lastEvent": store.lastEvent, "touch": touchRunning,
@@ -223,6 +252,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
                 "login": loginEnabled,
             ],
             "glance": glance.snapshot(),
+            "media": media.state,
             "lastLine": lastLine,
         ]
     }
@@ -235,14 +265,34 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
             guard AXIsProcessTrusted() else { note("Key not sent: Accessibility is not allowed"); return }
             if keys.perform(name), name != "pttUp" { note("Key \(name) → \(front?.localizedName ?? "?")") }
         case "jump":
-            if let id = m["id"] as? String { store.markRead(id) }
-            apps.activate(CLAUDE_BUNDLE) { [weak self] line in self?.note(line) }
+            guard let id = m["id"] as? String else { return }
+            store.markRead(id)
+            let name = store.sessions[id].map(SessionStore.folder) ?? "session"
+            links.lookup(id) { [weak self] local in
+                guard let self else { return }
+                if let local, let url = SessionLinks.session(local) {
+                    SessionLinks.open(url) { ok in self.note(ok ? "Opened \(name) in Claude" : "Could not open \(name)") }
+                } else {
+                    // No record of this session in the Claude app: bring the app forward instead.
+                    self.apps.activate(CLAUDE_BUNDLE) { _ in self.note("Opened Claude; could not find \(name)") }
+                }
+            }
+        case "new":
+            let kind = m["what"] as? String ?? "chat"
+            let (url, what) = kind == "code" ? (SessionLinks.newCode, "New Code session")
+                : kind == "cowork" ? (SessionLinks.newCowork, "New Cowork task") : (SessionLinks.newChat, "New chat")
+            SessionLinks.open(url) { [weak self] ok in
+                self?.note(ok ? "\(what) in Claude" : "\(what) could not be opened")
+            }
         case "app":
             if let id = m["id"] as? String { apps.activate(id) { [weak self] line in self?.note(line) } }
         case "hooks":
             let mode = m["mode"] as? String == "remove" ? "remove" : "install"
             if let problem = hooks.apply(mode) { note(problem) }
             else { note(mode == "install" ? "Session hooks installed" : "Session hooks removed") }
+        case "media":
+            guard let cmd = m["cmd"] as? String else { return }
+            media.command(cmd, value: (m["value"] as? NSNumber)?.doubleValue)
         case "theme":
             if let t = m["value"] as? String, ["auto", "light", "dark"].contains(t) {
                 UserDefaults.standard.set(t, forKey: "theme"); push()

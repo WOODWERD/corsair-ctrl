@@ -7,7 +7,7 @@ Name: **Corsair Ctrl** (Drew, 2026-11-19). The working name was Edge Ctrl; only 
 ## How to view
 - Serve the folder and open it: `python3 -m http.server 47620 --bind 127.0.0.1 --directory ~/Code/corsair-ctrl/design`, then `http://localhost:47620/`.
 - The selectors above the panel switch states. They are review chrome, not product.
-- `?kiosk=1` shows the panel alone at true size, for viewing on the Edge. `&theme=light` or `&theme=dark` forces a theme.
+- `?kiosk=1` shows the panel alone at true size, for viewing on the Corsair. `&theme=light` or `&theme=dark` forces a theme.
 
 ## Frame
 2560 × 720, 1x. Four rows, all Fibonacci:
@@ -19,7 +19,7 @@ Name: **Corsair Ctrl** (Drew, 2026-11-19). The working name was Edge Ctrl; only 
 | Areas | 89 | 576 | Glance 374 · Agents 1438 · Apps 144 · Voice 604 |
 | Footer | 665 | 55 | Maker's mark, tagline, last event line, version |
 
-## Edge tier (proposed addition to WOODWERD Digital)
+## Corsair tier (proposed addition to WOODWERD Digital)
 - Physical: 14.5 in, about 355 × 100 mm, about 7.2 px/mm.
 - Minimum touch target: 65 px (a 9 mm fingertip). Every control in the mock is 65 px or taller; the main ones are 89.
 - Type: the root-phi scale applies here, from a 21 px body. 13 micro · 16.5 caption · 21 body · 26.7 h3 · 34 h2 · 55 h1.
@@ -69,7 +69,7 @@ Opens over the Glance column only. Theme (System, Light, Dark), status rows, Qui
 ## Raised, not decided
 These touch the design system or go past the spec. Each needs a yes or no from Drew.
 
-1. **A new screen tier.** WOODWERD Digital has no tier for this panel. The Edge tier above is a proposal.
+1. **A new screen tier.** WOODWERD Digital has no tier for this panel. The Corsair tier above is a proposal.
 2. **A display type step.** The clock uses 89 px, the phi-cubed step. The system's scale stops at 2.618 (55 px here).
 3. **Bands.** The system says every surface carries a toolkit strip, header, content and footer. Here the toolkit line sits inside the header and there is no All tools menu, because a kiosk panel has nowhere to navigate to.
 4. **Flow Ctrl's red.** Changed 2026-11-19 after Drew's review: the Voice area now matches the shipped Flow Ctrl face, red hands-free included. That sits outside WOODWERD Digital's rule that red means error only. Flow Ctrl's own theme defines red as "live or destructive", so either the system gains that meaning or Flow Ctrl is the stated exception.
@@ -81,4 +81,4 @@ These touch the design system or go past the spec. Each needs a yes or no from D
 10. **Toolkit pitch.** The system's open decision 7 (the kit is outgrowing the board) applies. The header says "Ctrl · a WOODWERD toolkit" and gives no CYD pitch.
 
 ## Checked
-Rendered at 2560 × 720 in light and dark. On the Edge itself the panel reported all five font files loaded (Inter 400, 500, 600; JetBrains Mono 400, 500) at 2560 × 720, 1x. No control is under 65 px. No text overflows its box in the sample states. Shown on the Edge; Drew's review is in progress.
+Rendered at 2560 × 720 in light and dark. On the Corsair itself the panel reported all five font files loaded (Inter 400, 500, 600; JetBrains Mono 400, 500) at 2560 × 720, 1x. No control is under 65 px. No text overflows its box in the sample states. Shown on the Corsair; Drew's review is in progress.

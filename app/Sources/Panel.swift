@@ -6,7 +6,7 @@ import WebKit
 /// Accessibility as a floating dialog whose focus cannot be set. Report exactly that,
 /// and answer every hit test with the window itself so the driver never sees WebKit's
 /// out-of-process elements (their owner pid differs and it rejects the tap).
-final class EdgePanel: NSPanel {
+final class CorsairPanel: NSPanel {
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
     override func accessibilityHitTest(_ point: NSPoint) -> Any? { self }
@@ -20,7 +20,7 @@ final class EdgePanel: NSPanel {
     }
 }
 
-final class EdgeWeb: WKWebView {
+final class CorsairWeb: WKWebView {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }
 

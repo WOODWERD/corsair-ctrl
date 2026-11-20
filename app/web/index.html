@@ -22,7 +22,7 @@
   --ok:#2F9E5F; --attention:#FF9F43; --fault:#D0453A;
   --band:#0C0B09; --band-ink:#FFFFFF; --band-soft:#A9A49A; --band-line:#3A3733;
   --primary:#0C0B09; --primary-ink:#FFFFFF; --primary-soft:#8E8A82;
-  --on-ok:#FFFFFF; --attention-tint:#FFF1E0;
+  --on-ok:#FFFFFF; --on-accent:#141311; --accent-down:#A87830; --attention-tint:#FFF1E0;
   /* Flow Ctrl face, from cyd-flow-ctrl/src/theme.h */
   --chip:#ECE7DE; --chip-hi:#DFD8CB; --pill:#111111; --pill-rim:#111111; --wave-idle:#5A5650; --wave-live:#FFFFFF;
   --live:#E5484D; --on-live:#FFFFFF; --live-ink:#C9353A; --live-tint:#FBE3E3;
@@ -97,7 +97,7 @@ body.kiosk .frame{outline:0}
 @media (prefers-reduced-motion: reduce){.dot.pulse,.bars i{animation:none}}
 
 /* Row 3: four areas. 374 | 1438 | 144 | 604 — the Apps strip is cut from the Agents width. */
-.areas{display:grid;grid-template-columns:374px 1438px 144px 604px}
+.areas{display:grid;grid-template-columns:374px 1294px 144px 374px 374px}
 .area{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
 .area:last-child{border-right:0}
 .area-band{height:34px;flex:none;display:flex;align-items:center;gap:13px;padding:0 21px;background:var(--band);color:var(--band-ink);font-size:var(--t-cap)}
@@ -139,7 +139,9 @@ body.kiosk .frame{outline:0}
 .card{border-radius:13px;background:var(--surface);border:1px solid var(--line);padding:21px;display:flex;flex-direction:column;gap:8px;text-align:left;min-width:0;position:relative}
 .card:active{background:var(--accent-tint)}
 .card .st{display:flex;align-items:center;gap:8px;font-size:var(--t-cap);font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
-.card .nm{font-size:var(--t-h2);font-weight:600;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+.card .nm{font-size:var(--t-h2);font-weight:600;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;width:100%}
+.card .mt .fo{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;margin-left:13px}
+.card .mt .ago{flex:none}
 .card .la{font-size:var(--t-body);line-height:1.35;color:var(--ink-soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex:1}
 .card .mt{display:flex;justify-content:space-between;width:100%;font-family:var(--mono);font-size:var(--t-cap);color:var(--ink-soft);font-variant-numeric:tabular-nums}
 .card.needs{border:3px solid var(--attention);padding:19px;background:var(--attention-tint)}
@@ -165,46 +167,78 @@ body.kiosk .frame{outline:0}
 .app.front .ico{background:var(--primary-ink);color:var(--primary)}
 .app.off .nm,.app.off .ico{color:var(--ink-soft)}
 
-/* 04 Voice — the Flow Ctrl v1.1.0 face, scaled to this panel */
-.frow{display:flex;align-items:center;gap:13px;height:89px}
-.fstatus{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
-.fstatus .n{display:flex;align-items:center;gap:8px;font-size:var(--t-h3);font-weight:500;color:var(--ink-soft)}
-.fstatus .l{font-size:var(--t-cap);color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fstatus .l b{color:var(--ink);font-weight:600}
-.chip{height:89px;min-width:89px;padding:0 21px;border-radius:21px;background:var(--chip);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:8px;font-size:var(--t-body);font-weight:600;border:3px solid transparent;flex:none}
-.chip:active{background:var(--chip-hi)}
-.chip svg{width:44px;height:44px;flex:none}
-.chip.hand{background:transparent;border-color:var(--live);color:var(--live)}
-.chip.hand.on{background:var(--live);color:var(--on-live)}
-.chip.trash{color:var(--ink-soft)}
-.voice.handsfree .chip.trash{background:var(--live-tint);color:var(--live-ink)}
-.chip[disabled]{background:var(--chip);border-color:transparent;color:var(--line-strong);opacity:.6;cursor:default}
-.chip .x{display:none;font-size:var(--t-h2);font-weight:600;line-height:1}
-.voice.handsfree .chip.trash svg{display:none}
-.voice.handsfree .chip.trash .x{display:block}
-.talk{flex:1;min-height:0;border-radius:999px;background:var(--pill);border:3px solid var(--pill-rim);color:var(--wave-live);display:flex;align-items:center;justify-content:center;position:relative}
-.talk .dots{display:flex;gap:18px}
-.talk .dots i{width:11px;height:11px;border-radius:50%;background:var(--wave-idle)}
-.bars{display:none;align-items:center;gap:11px;height:55%}
-.bars i{width:11px;border-radius:6px;background:currentColor;animation:wave 1s ease-in-out infinite}
+/* 04 Media Ctrl — the Media Ctrl portrait face */
+.m-main{flex:1;min-height:0;display:flex;flex-direction:column;gap:13px}
+.m-title{font-size:var(--t-h2);font-weight:600;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:82px}
+.m-artist{font-size:var(--t-body);color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:28px}
+.m-note{font-size:var(--t-body);color:var(--ink-soft);line-height:1.35}
+.m-bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;flex:none}
+.m-bar i{display:block;height:100%;background:var(--accent);width:0}
+.m-times{display:flex;justify-content:space-between;font-family:var(--mono);font-size:var(--t-cap);color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.m-transport{flex:1;min-height:89px;display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:13px}
+.m-btn{border-radius:13px;background:var(--surface);border:1px solid var(--line);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:65px;font-family:var(--mono);font-size:var(--t-cap)}
+.m-btn svg{width:44px;height:44px}
+.m-btn:active{background:var(--accent-tint)}
+.m-btn.play{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.m-btn.play:active{background:var(--accent-down)}
+.m-btn.play svg{width:60px;height:60px}
+.m-btn.play .both{display:flex;gap:3px}
+.m-btn.play .both svg{width:40px;height:40px}
+.m-btn.on{border:2px solid var(--ok)}
+.m-btn[disabled]{color:var(--line-strong);background:transparent;cursor:default}
+.m-btn.play[disabled]{background:var(--line);border-color:var(--line);color:var(--ink-soft)}
+.m-more{flex:1;min-height:0;display:none;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);gap:13px}
+.m-more .m-btn svg{width:34px;height:34px}
+.media.more .m-more{display:grid}
+.media.more .m-main{display:none}
+.m-volrow{display:grid;grid-template-columns:1fr 89px;gap:13px;align-items:end;flex:none}
+.m-vol .lab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:var(--t-cap);color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.m-slider{height:65px;display:flex;align-items:center;position:relative;touch-action:none;cursor:pointer}
+.m-slider .track{height:8px;border-radius:4px;background:var(--line);width:100%;position:relative}
+.m-slider .fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--ink-soft);width:0}
+.m-slider .knob{position:absolute;top:50%;left:0;width:34px;height:34px;border-radius:50%;background:var(--ink);transform:translate(-50%,-50%)}
+.m-slider.off .knob{background:var(--line-strong)}
+.m-volrow .btn{height:65px;font-size:var(--t-body)}
+
+/* 05 Flow Ctrl — the Flow Ctrl v1.1.0 portrait face */
+.f-status{display:flex;align-items:center;gap:8px;font-size:var(--t-body);color:var(--ink-soft);height:26px;white-space:nowrap;flex:none}
+.f-status .to{margin-left:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:var(--t-cap)}
+.f-status .to b{color:var(--ink);font-weight:600}
+.f-pair{display:grid;grid-template-columns:1fr 1fr;gap:13px;flex:none}
+.f-btn{height:89px;border-radius:21px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:18px;white-space:nowrap;padding:0 5px;font-weight:600;border:3px solid var(--line-strong);background:var(--chip);color:var(--ink-soft)}
+.f-btn svg{width:30px;height:30px;flex:none}
+.f-btn .x{font-size:var(--t-h3);line-height:1;display:none}
+.f-btn.hand{background:transparent;border-color:var(--live);color:var(--live-ink)}
+.flow.handsfree .f-btn.hand{background:var(--live);color:var(--on-live)}
+.flow.handsfree .f-btn.trash{background:var(--live-tint);border-color:var(--live);color:var(--live-ink)}
+.flow.handsfree .f-btn.trash svg{display:none}
+.flow.handsfree .f-btn.trash .x{display:block}
+.flow.holding .f-btn.hand{opacity:.45}
+.f-btn[disabled]{opacity:.45;cursor:default}
+.talk{flex:1;min-height:0;border-radius:89px;background:var(--pill);border:3px solid var(--pill-rim);color:var(--wave-live);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:21px;padding:0 21px}
+.talk .dots{display:flex;gap:13px;height:76px;align-items:center}
+.talk .dots i{width:9px;height:9px;border-radius:50%;background:var(--wave-idle)}
+.bars{display:none;align-items:center;gap:9px;height:76px}
+.bars i{width:9px;border-radius:5px;background:currentColor;animation:wave 1s ease-in-out infinite}
 .bars i:nth-child(1){height:24%;animation-delay:-.9s}.bars i:nth-child(2){height:34%;animation-delay:-.8s}
 .bars i:nth-child(3){height:50%;animation-delay:-.7s}.bars i:nth-child(4){height:66%;animation-delay:-.6s}
 .bars i:nth-child(5){height:84%;animation-delay:-.5s}.bars i:nth-child(6){height:100%;animation-delay:-.4s}
 .bars i:nth-child(7){height:100%;animation-delay:-.3s}.bars i:nth-child(8){height:66%;animation-delay:-.2s}
 .bars i:nth-child(9){height:44%;animation-delay:-.1s}.bars i:nth-child(10){height:44%}.bars i:nth-child(11){height:28%;animation-delay:-.45s}
 @keyframes wave{50%{transform:scaleY(.55)}}
-.voice.holding .talk{box-shadow:0 0 0 5px var(--ground),0 0 0 9px var(--pill-rim)}
-.voice.holding .dots,.voice.handsfree .dots{display:none}
-.voice.holding .bars,.voice.handsfree .bars{display:flex}
-.voice.handsfree .bars{color:var(--live)}
+.talk .word{font-size:var(--t-h3);font-weight:600;color:var(--wave-live);text-align:center;line-height:1.2}
+.flow.holding .talk{box-shadow:0 0 0 5px var(--ground),0 0 0 9px var(--pill-rim)}
+.flow.holding .dots,.flow.handsfree .dots{display:none}
+.flow.holding .bars,.flow.handsfree .bars{display:flex}
+.flow.handsfree .bars{color:var(--live)}
 .talk[disabled]{opacity:.45;cursor:default}
-.cue{text-align:center;font-size:var(--t-cap);font-weight:600;letter-spacing:.18em;text-transform:uppercase;height:21px;font-variant-numeric:tabular-nums}
-.sendrow{display:grid;grid-template-columns:1fr 144px;gap:13px}
-.sendrow .chip{height:89px;border-radius:21px}
-.chip.send{font-size:var(--t-h3);letter-spacing:.08em;text-transform:uppercase}
-.chip.now{flex-direction:column;gap:0;padding:0;font-size:var(--t-cap)}
-.chip.now .keys{display:flex;gap:5px}
-.chip.now svg{width:34px;height:34px}
+.f-send{display:grid;grid-template-columns:1fr 110px;gap:13px;flex:none}
+.f-out{height:110px;border-radius:21px;background:var(--surface);border:3px solid var(--ink);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:13px;font-size:var(--t-h3);font-weight:600}
+.f-out:active{background:var(--chip)}
+.f-out svg{width:34px;height:34px}
+.f-out.now{flex-direction:column;gap:0;font-size:var(--t-cap)}
+.f-out.now .keys{display:flex;gap:3px}
+.f-out[disabled]{border-color:var(--line-strong);color:var(--line-strong);cursor:default}
 
 /* Row 4: footer — the brand signs here */
 .footer{display:flex;align-items:center;gap:21px;padding:0 21px;border-top:1px solid var(--line)}
@@ -230,6 +264,13 @@ body.kiosk .frame{outline:0}
 /* ── Live app additions ────────────────────────────────────── */
 html,body{overflow:hidden;height:100%}
 [hidden]{display:none !important}
+.newk{font-size:var(--t-micro);font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+.glance .row{padding:8px 0}
+.glance .area-body{gap:8px}
+.trio3{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}
+.btn.glyph{flex-direction:column;gap:5px;min-height:76px;padding:0}
+.btn.glyph svg{width:30px;height:30px}
+.btn.glyph span{font-size:var(--t-micro);font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
 .panel{transform-origin:0 0}
 .app .ico{background:transparent;width:55px;height:55px;border-radius:0}
 .app .ico img{width:55px;height:55px;display:block}
@@ -237,6 +278,17 @@ html,body{overflow:hidden;height:100%}
 .app.front .ico{background:transparent;color:inherit}
 .app.off .ico img{opacity:.35;filter:grayscale(1)}
 .app.off .nm{color:var(--ink-soft)}
+/* The strip scrolls: pinned apps first, then the other open apps. */
+.apps .area-body{padding:0;gap:0;position:relative;overflow:hidden}
+.apps-scroll{position:absolute;inset:0;overflow-y:auto;padding:13px;display:flex;flex-direction:column;gap:13px;scrollbar-width:none;touch-action:none}
+.apps-scroll::-webkit-scrollbar{display:none}
+.apps-scroll .app{flex:none;height:119px}
+.apps-scroll .app .nm{max-width:100%;padding:0 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.apps-scroll .sep{flex:none;height:1px;background:var(--line-strong);margin:0 8px}
+.apps .more{position:absolute;left:0;right:0;height:34px;pointer-events:none;opacity:0;transition:opacity .15s}
+.apps .more.down{bottom:0;background:linear-gradient(to top,var(--ground),transparent)}
+.apps .more.up{top:0;background:linear-gradient(to bottom,var(--ground),transparent)}
+.apps .more.show{opacity:1}
 .row.tap{cursor:pointer}
 .empty .btn{margin-top:13px;padding:0 34px;min-height:65px}
 .sheet{width:748px;display:none;grid-template-columns:1fr 1fr;gap:21px;align-content:start}
@@ -264,7 +316,7 @@ html,body{overflow:hidden;height:100%}
   </header>
 
   <main class="areas">
-    <section class="area">
+    <section class="area glance">
       <div class="area-band"><span class="n">01</span><span class="t">Glance</span><span class="s" id="s-glance"></span></div>
       <div class="area-body">
         <div class="clock" id="clock"></div>
@@ -274,37 +326,67 @@ html,body{overflow:hidden;height:100%}
           <div class="row tap" id="next-row"><span class="k">Next</span><span class="v" id="n-v">Not read yet</span><span class="d" id="n-d"></span></div>
         </div>
         <div class="spacer"></div>
+        <div class="trio3"><button class="btn glyph" id="new-chat" aria-label="New chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/></svg><span>Chat</span></button><button class="btn glyph" id="new-code" aria-label="New Code session"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/></svg><span>Code</span></button></div>
         <button class="btn" id="open-settings">Settings</button>
       </div>
     </section>
 
     <section class="area">
-      <div class="area-band"><span class="n">02</span><span class="t">Agents</span><span class="p">Claude Code sessions. Tap a card to open Claude.</span><span class="s" id="s-board"></span></div>
+      <div class="area-band"><span class="n">02</span><span class="t">Agents</span><span class="p">Claude Code sessions. Tap a card to open it in Claude.</span><span class="s" id="s-board"></span></div>
       <div class="area-body" id="board"></div>
     </section>
 
     <section class="area apps">
       <div class="area-band"><span class="n">03</span><span class="t">Apps</span></div>
-      <div class="area-body" id="apps"></div>
+      <div class="area-body"><div class="apps-scroll" id="apps"></div><div class="more up" id="apps-up"></div><div class="more down" id="apps-down"></div></div>
     </section>
 
-    <section class="area voice" id="voice">
-      <div class="area-band"><span class="n">04</span><span class="t">Voice</span><span class="p">Wispr Flow</span><span class="s" id="s-voice"></span></div>
+    <section class="area media" id="media">
+      <div class="area-band"><span class="n">04</span><span class="t">Media Ctrl</span><span class="s" id="s-media"></span></div>
       <div class="area-body">
-        <div class="frow">
-          <div class="fstatus"><span class="n"><span class="dot" id="f-dot"></span>Flow Ctrl</span><span class="l" id="lands"></span></div>
-          <button class="chip hand" id="hf" aria-label="Hands-free"><svg viewBox="0 0 28 28" aria-hidden="true"><defs><mask id="hm"><rect width="28" height="28" fill="#fff"/><line x1="3" y1="3" x2="25" y2="25" stroke="#000" stroke-width="5.2"/></mask></defs><g fill="currentColor" mask="url(#hm)"><rect x="7" y="12" width="14" height="13.5" rx="4"/><rect x="7.4" y="5" width="3.2" height="10" rx="1.6"/><rect x="11" y="2.5" width="3.2" height="12.5" rx="1.6"/><rect x="14.6" y="3" width="3.2" height="12" rx="1.6"/><rect x="18.2" y="5.5" width="3.2" height="9.5" rx="1.6"/><rect x="2.5" y="12.5" width="6" height="4.5" rx="1.8"/></g><line x1="4" y1="4" x2="24" y2="24" stroke="currentColor" stroke-width="2.4"/></svg></button>
-          <button class="chip trash" id="discard" aria-label="Discard"><svg viewBox="0 0 28 28" aria-hidden="true"><defs><mask id="tm"><rect width="28" height="28" fill="#fff"/><g stroke="#000" stroke-width="1.5"><line x1="11" y1="13" x2="11.24" y2="22.4"/><line x1="14" y1="13" x2="14" y2="22.4"/><line x1="17" y1="13" x2="16.76" y2="22.4"/></g></mask></defs><g fill="currentColor"><rect x="5" y="6" width="18" height="2.6" rx="1.3"/><path fill-rule="evenodd" d="M11 3h6v3.4h-6zM12.6 4.6h2.8v1.8h-2.8z"/><polygon points="7,10.2 21,10.2 19.8,25 8.2,25" mask="url(#tm)"/></g></svg><span class="x">×</span></button>
-          <button class="chip" id="newchat"><span style="font-size:var(--t-h2);font-weight:500;line-height:1">+</span>New chat</button>
+        <div class="m-main">
+          <div class="m-title" id="m-title"></div>
+          <div class="m-artist" id="m-artist"></div>
+          <div class="m-bar"><i id="m-fill"></i></div>
+          <div class="m-times"><span id="m-el"></span><span id="m-left"></span></div>
+          <div class="m-transport">
+            <button class="m-btn" id="m-prev" aria-label="Previous"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4"/><path d="M19 5.5 9 12l10 6.5z" fill="currentColor"/></svg></button>
+            <button class="m-btn play" id="m-play" aria-label="Play or pause"></button>
+            <button class="m-btn" id="m-next" aria-label="Next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5v14" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4"/><path d="M5 5.5 15 12 5 18.5z" fill="currentColor"/></svg></button>
+          </div>
+        </div>
+        <div class="m-more">
+          <button class="m-btn" id="m-back15"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2.1-5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/><path d="M5 3.5V8h4.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg><span>-15 s</span></button>
+          <button class="m-btn" id="m-fwd15"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.1-5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/><path d="M19 3.5V8h-4.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg><span>+15 s</span></button>
+          <button class="m-btn" id="m-shuffle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h3.5l9 10H20M3 17h3.5l2.8-3.1M14.7 10.1 17.5 7H20M17.5 4.5 20 7l-2.5 2.5M17.5 14.5 20 17l-2.5 2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg><span id="m-shuffle-l">Shuffle</span></button>
+          <button class="m-btn" id="m-repeat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11V9a3 3 0 0 1 3-3h12M16 3l3 3-3 3M20 13v2a3 3 0 0 1-3 3H5M8 21l-3-3 3-3" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg><span id="m-repeat-l">Repeat</span></button>
+          <button class="m-btn" id="m-like"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.2a4.2 4.2 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg><span>Like</span></button>
+          <button class="m-btn" id="m-mute"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5l5 4v-13l-5 4z" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/><path d="M16.5 9.5l5 5M21.5 9.5l-5 5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg><span id="m-mute-l">Mute</span></button>
+        </div>
+        <div class="m-volrow">
+          <div class="m-vol"><div class="lab"><span>VOL</span><span id="m-volv">–</span></div>
+            <div class="m-slider" id="m-slider"><div class="track"><div class="fill" id="m-volfill"></div><div class="knob" id="m-knob"></div></div></div></div>
+          <button class="btn" id="m-moreb">More</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="area flow" id="voice">
+      <div class="area-band"><span class="n">05</span><span class="t">Flow Ctrl</span><span class="s" id="s-voice"></span></div>
+      <div class="area-body">
+        <div class="f-status"><span class="dot" id="f-dot"></span><span id="f-text">Ready</span><span class="to" id="lands"></span></div>
+        <div class="f-pair">
+          <button class="f-btn hand" id="hf" aria-label="Hands-free"><svg viewBox="0 0 28 28" aria-hidden="true"><defs><mask id="hm"><rect width="28" height="28" fill="#fff"/><line x1="3" y1="3" x2="25" y2="25" stroke="#000" stroke-width="5.2"/></mask></defs><g fill="currentColor" mask="url(#hm)"><rect x="7" y="12" width="14" height="13.5" rx="4"/><rect x="7.4" y="5" width="3.2" height="10" rx="1.6"/><rect x="11" y="2.5" width="3.2" height="12.5" rx="1.6"/><rect x="14.6" y="3" width="3.2" height="12" rx="1.6"/><rect x="18.2" y="5.5" width="3.2" height="9.5" rx="1.6"/><rect x="2.5" y="12.5" width="6" height="4.5" rx="1.8"/></g><line x1="4" y1="4" x2="24" y2="24" stroke="currentColor" stroke-width="2.4"/></svg><span>Hands-free</span></button>
+          <button class="f-btn trash" id="discard" aria-label="Discard"><svg viewBox="0 0 28 28" aria-hidden="true"><defs><mask id="tm"><rect width="28" height="28" fill="#fff"/><g stroke="#000" stroke-width="1.5"><line x1="11" y1="13" x2="11.24" y2="22.4"/><line x1="14" y1="13" x2="14" y2="22.4"/><line x1="17" y1="13" x2="16.76" y2="22.4"/></g></mask></defs><g fill="currentColor"><rect x="5" y="6" width="18" height="2.6" rx="1.3"/><path fill-rule="evenodd" d="M11 3h6v3.4h-6zM12.6 4.6h2.8v1.8h-2.8z"/><polygon points="7,10.2 21,10.2 19.8,25 8.2,25" mask="url(#tm)"/></g></svg><span class="x">×</span><span id="discard-l">Discard</span></button>
         </div>
         <button class="talk" id="talk" aria-label="Hold to talk">
           <span class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
           <span class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <span class="word" id="cue">Hold to talk</span>
         </button>
-        <div class="cue" id="cue">Hold to talk</div>
-        <div class="sendrow">
-          <button class="chip send" id="send">Send</button>
-          <button class="chip now" id="sendnow" aria-label="Send now, Command Return"><span class="keys"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M10.5 10.5V6.5a4 4 0 1 0-4 4H21.5a4 4 0 1 0-4-4V21.5a4 4 0 1 0 4-4H6.5a4 4 0 1 0 4 4Z" fill="none" stroke="currentColor" stroke-width="2.3"/></svg><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M21 4.5V17H9.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="4,17 11.5,10.5 11.5,23.5" fill="currentColor"/></svg></span>Send now</button>
+        <div class="f-send">
+          <button class="f-out" id="send"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M21 4.5V17H9.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="4,17 11.5,10.5 11.5,23.5" fill="currentColor"/></svg>Send</button>
+          <button class="f-out now" id="sendnow" aria-label="Send now, Command Return"><span class="keys"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M10.5 10.5V6.5a4 4 0 1 0-4 4H21.5a4 4 0 1 0-4-4V21.5a4 4 0 1 0 4-4H6.5a4 4 0 1 0 4 4Z" fill="none" stroke="currentColor" stroke-width="2.3"/></svg><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M21 4.5V17H9.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="4,17 11.5,10.5 11.5,23.5" fill="currentColor"/></svg></span>Send now</button>
         </div>
       </div>
     </section>
@@ -514,15 +596,15 @@ function renderBoard() {
   band.innerHTML = needs ? `<span class="dot attention"></span>${needs} ${needs === 1 ? "needs" : "need"} you`
     : working ? `<span class="dot pulse"></span>${working} working` : `<span class="dot"></span>Nothing waiting`;
   // Rebuild the cards only when something other than the clock changed, so a press is never interrupted.
-  const key = JSON.stringify(list.map(s => [s.id, s.state, s.name, s.last]));
+  const key = JSON.stringify(list.map(s => [s.id, s.state, s.name, s.title, s.last]));
   if (key !== boardKey) {
     boardKey = key;
     board.innerHTML = `<div class="cards">${list.map(s => `
       <button class="card ${s.state}" data-id="${esc(s.id)}">
         <span class="st"><span class="${DOT[s.state] || "dot idle"}"></span>${LABEL[s.state] || esc(s.state)}</span>
-        <span class="nm">${esc(s.name)}</span>
+        <span class="nm">${esc(s.title || s.name)}</span>
         <span class="la">${esc(s.last)}</span>
-        <span class="mt"><span class="ago" data-since="${s.since}"></span><span>${esc(s.id.slice(0, 8))}</span></span>
+        <span class="mt"><span class="ago" data-since="${s.since}"></span><span class="fo">${esc(s.title ? s.name : s.id.slice(0, 8))}</span></span>
       </button>`).join("")}</div>`;
     board.querySelectorAll(".card").forEach(c => c.onclick = () => post({ action: "jump", id: c.dataset.id }));
   }
@@ -536,53 +618,128 @@ function renderApps() {
   const key = JSON.stringify(ST.apps) + Object.keys(ICONS).length;
   if (key === appsKey) return;
   appsKey = key;
-  $("apps").innerHTML = ST.apps.map(a => `
+  const tile = a => `
     <button class="app ${a.front ? "front" : ""} ${a.running ? "" : "off"}" data-id="${esc(a.id)}" aria-label="Switch to ${esc(a.name)}" ${a.installed ? "" : "disabled"}>
       ${a.running ? "" : `<span class="dot idle"></span>`}
-      <span class="ico">${ICONS[a.id] ? `<img src="${ICONS[a.id]}" alt="">` : esc(a.name.slice(0, 1))}</span>
+      <span class="ico">${ICONS[a.id] ? `<img src="${ICONS[a.id]}" alt="" draggable="false">` : esc(a.name.slice(0, 1))}</span>
       <span class="nm">${esc(a.installed ? a.name : "Not installed")}</span>
-    </button>`).join("");
-  document.querySelectorAll("#apps .app").forEach(b => b.onclick = () => post({ action: "app", id: b.dataset.id }));
+    </button>`;
+  const pinned = ST.apps.filter(a => a.pinned !== false), open = ST.apps.filter(a => a.pinned === false);
+  const box = $("apps"), top = box.scrollTop;
+  box.innerHTML = pinned.map(tile).join("") + (open.length ? `<div class="sep"></div>` + open.map(tile).join("") : "");
+  box.scrollTop = top;
+  appsEdges();
+}
+function appsEdges() {
+  const box = $("apps");
+  $("apps-up").classList.toggle("show", box.scrollTop > 2);
+  $("apps-down").classList.toggle("show", box.scrollTop + box.clientHeight < box.scrollHeight - 2);
+}
+/* One finger drags the strip. A press that barely moves is a tap on the tile under it. */
+(() => {
+  const box = $("apps");
+  let startY = 0, startTop = 0, down = false, moved = false, target = null;
+  box.addEventListener("pointerdown", e => {
+    down = true; moved = false; startY = e.clientY; startTop = box.scrollTop; target = e.target.closest(".app");
+    box.setPointerCapture(e.pointerId);
+  });
+  box.addEventListener("pointermove", e => {
+    if (!down) return;
+    const dy = e.clientY - startY;
+    if (Math.abs(dy) > 10) moved = true;
+    if (moved) { box.scrollTop = startTop - dy; appsEdges(); }
+  });
+  const end = e => {
+    if (!down) return;
+    down = false;
+    if (!moved && e.type === "pointerup" && target && !target.disabled) post({ action: "app", id: target.dataset.id });
+  };
+  box.addEventListener("pointerup", end);
+  box.addEventListener("pointercancel", end);
+  box.addEventListener("scroll", appsEdges);
+})();
+
+/* ── 04 Media Ctrl ──────────────────────────────────────────── */
+const M_PLAY = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4.8v14.4L19.5 12z" fill="currentColor"/></svg>`, M_PAUSE = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2" fill="currentColor"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2" fill="currentColor"/></svg>`;
+const mmss = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+let dragVol = null;      // volume while a finger is on the slider
+function mediaPos(m) {
+  if (m.position == null) return null;
+  const p = m.state === "playing" ? m.position + (Date.now() / 1000 - m.at) : m.position;
+  return m.duration ? Math.min(m.duration, Math.max(0, p)) : Math.max(0, p);
+}
+function renderMedia() {
+  // state: playing | paused | keys (controls work, no track info) | none | off (not set up)
+  const m = ST.media || { state: "off" };
+  const band = $("s-media"), has = m.state === "playing" || m.state === "paused";
+  const can = m.can || {};
+  band.innerHTML = m.state === "playing" ? `<span class="dot"></span>${esc(m.app || "Playing")}`
+    : m.state === "paused" ? `<span class="dot idle"></span>${esc(m.app || "")} paused`
+    : m.state === "keys" ? `<span class="dot"></span>Media keys`
+    : m.state === "none" ? `<span class="dot idle"></span>Nothing playing` : `<span class="dot attention"></span>Not set up`;
+  if (has) { $("m-title").textContent = m.title || "Untitled"; $("m-artist").textContent = m.artist || ""; $("m-artist").className = "m-artist"; }
+  else {
+    $("m-title").textContent = m.state === "keys" ? "Connected" : m.state === "none" ? "Nothing playing" : "Not set up";
+    $("m-artist").className = "m-note";
+    $("m-artist").textContent = m.note || (m.state === "keys" ? "The buttons work as media keys. This app does not share what is playing."
+      : m.state === "none" ? "Start something in Spotify or Music." : "Media controls are not connected in this build.");
+  }
+  const pos = has ? mediaPos(m) : null;
+  $("m-fill").style.width = pos != null && m.duration ? `${(pos / m.duration) * 100}%` : "0";
+  $("m-el").textContent = pos != null ? mmss(pos) : "";
+  $("m-left").textContent = pos != null && m.duration ? `-${mmss(m.duration - pos)}` : "";
+  $("m-play").innerHTML = m.state === "playing" ? M_PAUSE : m.state === "paused" ? M_PLAY : `<span class="both">${M_PLAY}${M_PAUSE}</span>`;
+  const live = m.state !== "off";
+  for (const id of ["m-prev", "m-play", "m-next", "m-mute"]) $(id).disabled = !live;
+  $("m-back15").disabled = $("m-fwd15").disabled = !can.seek;
+  $("m-shuffle").disabled = !can.shuffle; $("m-repeat").disabled = !can.repeat; $("m-like").disabled = !can.like;
+  $("m-shuffle").classList.toggle("on", !!m.shuffle); $("m-shuffle-l").textContent = m.shuffle ? "Shuffle on" : "Shuffle";
+  $("m-repeat").classList.toggle("on", !!m.repeat); $("m-repeat-l").textContent = m.repeat ? "Repeat on" : "Repeat";
+  $("m-mute").classList.toggle("on", !!m.muted); $("m-mute-l").textContent = m.muted ? "Muted" : "Mute";
+  const vol = dragVol != null ? dragVol : m.volume;
+  $("m-slider").classList.toggle("off", vol == null);
+  $("m-volv").textContent = vol == null ? "–" : Math.round(vol);
+  $("m-volfill").style.width = $("m-knob").style.left = `${vol == null ? 50 : vol}%`;
 }
 
-/* ── 04 Voice ───────────────────────────────────────────────── */
-const VOICE_IDS = ["send", "sendnow", "discard", "talk", "hf", "newchat"];
+/* ── 05 Flow Ctrl ───────────────────────────────────────────── */
+const VOICE_IDS = ["send", "sendnow", "discard", "talk", "hf"];
 function renderVoice() {
-  const v = $("voice"), band = $("s-voice"), cue = $("cue");
+  const v = $("voice"), band = $("s-voice"), cue = $("cue"), text = $("f-text");
   const ok = ST.status.ax;
   v.classList.toggle("holding", V === "holding");
   v.classList.toggle("handsfree", V === "handsfree");
-  $("hf").classList.toggle("on", V === "handsfree");
   for (const id of VOICE_IDS) $(id).disabled = !ok;
-  $("lands").innerHTML = ST.front ? `Lands in <b>${esc(ST.front)}</b>` : "";
+  $("lands").innerHTML = ST.front ? `to <b>${esc(ST.front)}</b>` : "";
+  $("discard-l").textContent = V === "handsfree" ? "Cancel" : "Discard";
   if (!ok) {
     band.innerHTML = `<span class="dot attention"></span>Needs permission`;
-    $("f-dot").className = "dot attention";
-    $("lands").innerHTML = `<b>Cannot send keys yet</b>`;
+    $("f-dot").className = "dot attention"; text.textContent = "Cannot send keys yet"; $("lands").innerHTML = "";
     cue.textContent = "Allow Accessibility in Settings";
     return;
   }
   if (V === "ready") {
-    band.innerHTML = ST.status.wispr ? `<span class="dot"></span>Ready` : `<span class="dot attention"></span>Wispr Flow is not running`;
-    $("f-dot").className = ST.status.wispr ? "dot" : "dot attention";
+    band.innerHTML = ST.status.wispr ? `<span class="dot"></span>Wispr Flow` : `<span class="dot attention"></span>Wispr Flow is not running`;
+    $("f-dot").className = ST.status.wispr ? "dot" : "dot attention"; text.textContent = ST.status.wispr ? "Ready" : "Not running";
     cue.textContent = "Hold to talk";
   } else if (V === "holding") {
-    band.innerHTML = `<span class="dot pulse"></span>Listening`; $("f-dot").className = "dot";
-    cue.textContent = "Listening · release to paste";
+    band.innerHTML = `<span class="dot pulse"></span>Listening`; $("f-dot").className = "dot"; text.textContent = "Release to paste";
+    cue.textContent = "Listening";
     $("send").disabled = true; $("sendnow").disabled = true;
   } else {
+    const sec = Math.floor((Date.now() - hfStart) / 1000);
     band.innerHTML = `<span class="dot fault"></span>Hands-free`; $("f-dot").className = "dot fault";
-    const s = Math.floor((Date.now() - hfStart) / 1000);
-    cue.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")} · tap to stop`;
+    text.textContent = `Hands-free · ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+    cue.textContent = "Tap to stop";
   }
 }
 
 function render() {
   if (!ST) return;
-  renderStatus(); renderGlance(); renderBoard(); renderApps(); renderVoice();
+  renderStatus(); renderGlance(); renderBoard(); renderApps(); renderMedia(); renderVoice();
 }
 window.ctrlUpdate = s => { ST = s; render(); };
-window.ctrlIcons = m => { ICONS = m; appsKey = ""; renderApps(); };
+window.ctrlIcons = m => { Object.assign(ICONS, m); appsKey = ""; renderApps(); };
 
 /* ── Wiring ─────────────────────────────────────────────────── */
 const talk = $("talk");
@@ -603,8 +760,20 @@ $("hf").onclick = () => {
 };
 $("discard").onclick = () => { post({ action: "key", name: "discard" }); if (V === "handsfree") V = "ready"; renderVoice(); };
 $("send").onclick = () => post({ action: "key", name: "send" });
+
+const media = (cmd, value) => post(value == null ? { action: "media", cmd } : { action: "media", cmd, value });
+for (const [id, cmd] of [["m-prev", "prev"], ["m-play", "toggle"], ["m-next", "next"], ["m-back15", "back15"], ["m-fwd15", "fwd15"],
+                         ["m-shuffle", "shuffle"], ["m-repeat", "repeat"], ["m-like", "like"], ["m-mute", "mute"]]) $(id).onclick = () => media(cmd);
+$("m-moreb").onclick = () => { const on = $("media").classList.toggle("more"); $("m-moreb").textContent = on ? "Back" : "More"; };
+const slider = $("m-slider");
+const volAt = e => { const r = slider.getBoundingClientRect(); return Math.round(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * 100); };
+slider.addEventListener("pointerdown", e => { if (!ST || !ST.media || ST.media.state === "off") return; slider.setPointerCapture(e.pointerId); dragVol = volAt(e); renderMedia(); });
+slider.addEventListener("pointermove", e => { if (dragVol == null) return; dragVol = volAt(e); renderMedia(); });
+const volDone = () => { if (dragVol == null) return; media("volume", dragVol); if (ST.media) ST.media.volume = dragVol; dragVol = null; renderMedia(); };
+slider.addEventListener("pointerup", volDone); slider.addEventListener("pointercancel", volDone);
 $("sendnow").onclick = () => post({ action: "key", name: "sendNow" });
-$("newchat").onclick = () => post({ action: "key", name: "newChat" });
+$("new-chat").onclick = () => post({ action: "new", what: "chat" });
+$("new-code").onclick = () => post({ action: "new", what: "code" });
 
 $("open-settings").onclick = () => $("sheet").classList.add("open");
 $("close-settings").onclick = () => $("sheet").classList.remove("open");
@@ -620,7 +789,7 @@ addEventListener("resize", fit); fit();
 clock();
 if (bridge) document.fonts.ready.then(() => post({ action: "log", text:
   `page ready ${innerWidth}x${innerHeight} @${devicePixelRatio}x · fonts ${[...document.fonts].filter(f => f.status === "loaded").length}/${document.fonts.size} loaded · body ${getComputedStyle(document.body).fontFamily.split(",")[0]}` }));
-setInterval(() => { clock(); if (ST) { renderBoard(); if (V === "handsfree") renderVoice(); } }, 1000);
+setInterval(() => { clock(); if (ST) { renderBoard(); if (V === "handsfree") renderVoice(); if (dragVol == null) renderMedia(); } }, 1000);
 setInterval(() => { if (ST) renderGlance(); }, 30000);
 
 /* Opened in a browser with no app behind it: show sample data so the page can be checked. */
@@ -635,8 +804,13 @@ if (!bridge) {
       { id: "5d77b012-dddd", name: "icon-ctrl", state: "idle", since: now - 3700, last: "Session started" },
     ],
     apps: [{ id: "a", name: "Claude", installed: true, running: true, front: true }, { id: "b", name: "Fusion", installed: true, running: false, front: false },
-           { id: "c", name: "Chrome", installed: true, running: true, front: false }, { id: "d", name: "Finder", installed: true, running: true, front: false }],
+           { id: "c", name: "Chrome", installed: true, running: true, front: false }, { id: "d", name: "Finder", installed: true, running: true, front: false },
+           { id: "e", name: "Messages", installed: true, running: true, front: false, pinned: false }, { id: "f", name: "Spotify", installed: true, running: true, front: false, pinned: false },
+           { id: "g", name: "System Settings", installed: true, running: true, front: false, pinned: false }, { id: "h", name: "TextEdit", installed: true, running: true, front: false, pinned: false }],
     status: { hooks: !location.search.includes("nohooks"), lastEvent: now, touch: true, ax: !location.search.includes("noax"), wispr: true, login: false },
+    media: location.search.includes("nomedia") ? { state: "none" } : location.search.includes("keys") ? { state: "keys", volume: 40 }
+      : { state: "playing", app: "Spotify", title: "Low Tide Static (Night Version)", artist: "The Hollow Pines", duration: 253, position: 103, at: now,
+          volume: 62, shuffle: true, repeat: false, muted: false, can: { seek: true, shuffle: true, repeat: true, like: false } },
     glance: { place: "Austin", weatherEnabled: true, weather: { temp: 72, desc: "Clear", high: 78, rain: 20 }, weatherAt: now, weatherStale: false,
               calendar: "granted", next: { title: "Site visit", start: now + 4000 } },
   });
