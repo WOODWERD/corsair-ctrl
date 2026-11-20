@@ -97,7 +97,7 @@ body.kiosk .frame{outline:0}
 @media (prefers-reduced-motion: reduce){.dot.pulse,.bars i{animation:none}}
 
 /* Row 3: four areas. 374 | 1438 | 144 | 604 — the Apps strip is cut from the Agents width. */
-.areas{display:grid;grid-template-columns:374px 1294px 144px 374px 374px}
+.areas{display:grid;grid-template-columns:374px 65px 1229px 144px 374px 374px}
 .area{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
 .area:last-child{border-right:0}
 .area-band{height:34px;flex:none;display:flex;align-items:center;gap:13px;padding:0 21px;background:var(--band);color:var(--band-ink);font-size:var(--t-cap)}
@@ -264,6 +264,16 @@ body.kiosk .frame{outline:0}
 /* ── Live app additions ────────────────────────────────────── */
 html,body{overflow:hidden;height:100%}
 [hidden]{display:none !important}
+/* The fold rail: one tap leaves only Glance, so the screen behind can be used. */
+.rail .area-band{padding:0}
+.fold{flex:1;display:flex;align-items:center;justify-content:center;color:var(--ink-soft)}
+.fold:active{background:var(--accent-tint)}
+.fold svg{width:34px;height:34px}
+body.folded .fold svg{transform:rotate(180deg)}
+body.folded .panel{width:439px}
+body.folded .areas{grid-template-columns:374px 65px}
+body.folded .area:not(.glance):not(.rail),body.folded .kit,body.folded .purpose,body.folded .indicators,body.folded .lastline,body.folded .ver{display:none}
+body.folded .rail{border-right:1px solid var(--line-strong)}
 .newk{font-size:var(--t-micro);font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
 .glance .row{padding:8px 0}
 .glance .area-body{gap:8px}
@@ -329,6 +339,11 @@ html,body{overflow:hidden;height:100%}
         <div class="trio3"><button class="btn glyph" id="new-chat" aria-label="New chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/></svg><span>Chat</span></button><button class="btn glyph" id="new-code" aria-label="New Code session"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/></svg><span>Code</span></button></div>
         <button class="btn" id="open-settings">Settings</button>
       </div>
+    </section>
+
+    <section class="area rail">
+      <div class="area-band"></div>
+      <button class="fold" id="fold" aria-label="Fold the panel away"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 6l-6 6 6 6M10 6l-6 6 6 6"/></svg></button>
     </section>
 
     <section class="area">
@@ -528,6 +543,8 @@ function renderStatus() {
   $("b-login").textContent = s.login ? "Start at login: on" : "Start at login: off";
   $("lastline").textContent = ST.lastLine || "";
   document.documentElement.dataset.theme = ST.theme;
+  document.body.classList.toggle("folded", !!ST.folded);
+  $("fold").setAttribute("aria-label", ST.folded ? "Bring the panel back" : "Fold the panel away");
   document.querySelectorAll("#seg-theme button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === ST.theme)));
 }
 
@@ -775,7 +792,9 @@ $("sendnow").onclick = () => post({ action: "key", name: "sendNow" });
 $("new-chat").onclick = () => post({ action: "new", what: "chat" });
 $("new-code").onclick = () => post({ action: "new", what: "code" });
 
-$("open-settings").onclick = () => $("sheet").classList.add("open");
+const setFold = on => { if (bridge) post({ action: "fold", on }); else if (ST) { ST.folded = on; render(); } };
+$("fold").onclick = () => setFold(!(ST && ST.folded));
+$("open-settings").onclick = () => { if (ST && ST.folded) setFold(false); $("sheet").classList.add("open"); };
 $("close-settings").onclick = () => $("sheet").classList.remove("open");
 document.querySelectorAll("#seg-theme button").forEach(b => b.onclick = () => post({ action: "theme", value: b.dataset.t }));
 $("b-hooks").onclick = () => post({ action: "hooks", mode: ST?.status.hooks ? "remove" : "install" });
@@ -784,7 +803,7 @@ $("b-login").onclick = () => post({ action: "login", on: !ST?.status.login });
 $("b-quit").onclick = () => post({ action: "quit" });
 $("next-row").onclick = () => { if (ST && ST.glance.calendar === "unknown") post({ action: "calendar" }); };
 
-function fit() { $("panel").style.transform = `scale(${innerWidth / 2560})`; }
+function fit() { $("panel").style.transform = `scale(${innerHeight / 720})`; }   // by height: the window narrows when folded
 addEventListener("resize", fit); fit();
 clock();
 if (bridge) document.fonts.ready.then(() => post({ action: "log", text:

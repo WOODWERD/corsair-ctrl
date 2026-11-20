@@ -8,7 +8,7 @@ import ServiceManagement
 import ApplicationServices
 
 let PORT: UInt16 = 47616
-let VERSION = "0.3.1"
+let VERSION = "0.3.2"
 let CLAUDE_BUNDLE = "com.anthropic.claudefordesktop"
 
 struct Config: Codable {
@@ -41,6 +41,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
     private var server: Server?
     private var front = NSWorkspace.shared.frontmostApplication
     private var touchRunning = false
+    private var folded = false
     private var iconsSent: Set<String> = []
     private var loginEnabled = false
     private var lastLine = ""
@@ -124,7 +125,11 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
     /// Show on the Corsair. With no Corsair attached, hide rather than cover another display.
     private func place() {
         if let s = corsairScreen() {
-            panel.setFrame(s.frame, display: true)
+            // Folded, the window shrinks to Glance and the fold rail (439 of 2560), on the left,
+            // and whatever is behind the rest of the screen can be seen and used.
+            var frame = s.frame
+            if folded { frame.size.width = (439 * s.frame.height / 720).rounded() }
+            panel.setFrame(frame, display: true)
             panel.orderFrontRegardless()
         } else if panel.isVisible {
             panel.orderOut(nil)
@@ -254,6 +259,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
             "glance": glance.snapshot(),
             "media": media.state,
             "lastLine": lastLine,
+            "folded": folded,
         ]
     }
 
@@ -293,6 +299,10 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
         case "media":
             guard let cmd = m["cmd"] as? String else { return }
             media.command(cmd, value: (m["value"] as? NSNumber)?.doubleValue)
+        case "fold":
+            folded = m["on"] as? Bool ?? !folded
+            place()
+            note(folded ? "Panel folded away" : "Panel brought back")
         case "theme":
             if let t = m["value"] as? String, ["auto", "light", "dark"].contains(t) {
                 UserDefaults.standard.set(t, forKey: "theme"); push()
