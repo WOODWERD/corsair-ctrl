@@ -183,14 +183,18 @@ body.kiosk .frame{outline:0}
 .m-artist{font-size:var(--t-body);color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:28px}
 .m-note{font-size:var(--t-body);color:var(--ink-soft);line-height:1.35}
 .m-bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;flex:none}
-.m-bar i{display:block;height:100%;background:var(--accent);width:0}
+/* The accent follows the player: Spotify green, Music red, neutral with neither. */
+.media{--m-acc:var(--ink);--m-on:var(--ground);--m-down:var(--ink-soft)}
+.media[data-player="spotify"]{--m-acc:#1ED760;--m-on:#000;--m-down:#19B050}
+.media[data-player="music"]{--m-acc:#FA243C;--m-on:#fff;--m-down:#D11C30}
+.m-bar i{display:block;height:100%;background:var(--m-acc);width:0}
 .m-times{display:flex;justify-content:space-between;font-family:var(--mono);font-size:var(--t-cap);color:var(--ink-soft);font-variant-numeric:tabular-nums}
 .m-transport{flex:1;min-height:89px;display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:13px}
 .m-btn{border-radius:13px;background:var(--surface);border:1px solid var(--line);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:65px;font-family:var(--mono);font-size:var(--t-cap)}
 .m-btn svg{width:44px;height:44px}
 .m-btn:active{background:var(--accent-tint)}
-.m-btn.play{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-.m-btn.play:active{background:var(--accent-down)}
+.m-btn.play{background:var(--m-acc);border-color:var(--m-acc);color:var(--m-on)}
+.m-btn.play:active{background:var(--m-down)}
 .m-btn.play svg{width:60px;height:60px}
 .m-btn.play .both{display:flex;gap:3px}
 .m-btn.play .both svg{width:40px;height:40px}
@@ -705,6 +709,7 @@ function renderMedia() {
   const m = ST.media || { state: "off" };
   const band = $("s-media"), has = m.state === "playing" || m.state === "paused";
   const can = m.can || {};
+  $("media").dataset.player = has ? (m.app === "Spotify" ? "spotify" : m.app === "Music" ? "music" : "") : "";
   band.innerHTML = m.state === "playing" ? `<span class="dot"></span>${esc(m.app || "Playing")}`
     : m.state === "paused" ? `<span class="dot idle"></span>${esc(m.app || "")} paused`
     : m.state === "keys" ? `<span class="dot"></span>Media keys`
