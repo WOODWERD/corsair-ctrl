@@ -8,7 +8,7 @@ import ServiceManagement
 import ApplicationServices
 
 let PORT: UInt16 = 47616
-let VERSION = "0.3.2"
+let VERSION = "0.3.3"
 let CLAUDE_BUNDLE = "com.anthropic.claudefordesktop"
 
 struct Config: Codable {
@@ -98,6 +98,8 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
 
         place()
         observe()
+        let open = apps.state(frontID: "").filter { $0["pinned"] as? Bool == false }.compactMap { $0["name"] as? String }
+        Log.write("[apps] open, most recent first: \(open.joined(separator: ", "))")
         glance.onChange = { [weak self] in self?.push() }
         media.onChange = { [weak self] in self?.push() }
         media.onNote = { [weak self] line in self?.note(line) }
@@ -142,7 +144,10 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
         ws.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] n in
             let a = n.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
             // The panel is never where typing goes, so it never counts as the front app.
-            if let a, a.processIdentifier != ProcessInfo.processInfo.processIdentifier { self?.front = a }
+            if let a, a.processIdentifier != ProcessInfo.processInfo.processIdentifier {
+                self?.front = a
+                if let id = a.bundleIdentifier { self?.apps.used(id) }
+            }
             self?.push()
         }
         for name in [NSWorkspace.didLaunchApplicationNotification, NSWorkspace.didTerminateApplicationNotification] {
