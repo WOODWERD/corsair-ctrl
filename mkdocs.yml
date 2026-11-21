@@ -1,0 +1,58 @@
+site_name: Corsair Ctrl
+site_description: A touch panel for the Corsair XENEON EDGE beside a Mac. Claude Code sessions, app switching, media, everyday keys and Wispr Flow voice.
+site_url: https://WOODWERD.github.io/corsair-ctrl/
+repo_url: https://github.com/WOODWERD/corsair-ctrl
+repo_name: corsair-ctrl
+edit_uri: edit/main/docs/
+copyright: "© 2026 WOODWERD LLC · MIT · Unofficial, not affiliated with Corsair, Anthropic, Wispr, Spotify or Apple"
+docs_dir: docs
+theme:
+  name: material
+  custom_dir: docs-theme/overrides   # WOODWERD/ctrl-docs-theme, checked out at build time
+  palette:
+    - media: "(prefers-color-scheme)"
+      primary: custom
+      accent: custom
+      toggle: { icon: material/monitor, name: "Theme: match my computer's setting" }
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle: { icon: material/brightness-7, name: "Theme: light" }
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle: { icon: material/brightness-4, name: "Theme: dark" }
+  features:
+    - navigation.sections
+    - navigation.footer
+    - content.code.copy
+    - search.suggest
+  font:
+    text: Inter
+    code: JetBrains Mono
+extra_css:
+  - assets/woodwerd/woodwerd.css
+extra:
+  purpose: 'Touch panel for the Corsair XENEON EDGE.'
+  version: v0.4.2
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/WOODWERD
+      name: WOODWERD on GitHub
+    - icon: material/web
+      link: https://woodwerd.com
+      name: woodwerd.com
+nav:
+  - Home: index.md
+  - Changelog: changelog.md
+  - Notices & license: notices.md
+markdown_extensions:
+  - admonition
+  - tables
+  - attr_list
+  - toc:
+      permalink: true
+plugins:
+  - search

@@ -14,6 +14,7 @@ The panel never takes focus. Whatever app you were working in stays in front, so
 **Fold rail.** The narrow strip with the double arrow folds the panel down to Glance alone. The rest of the Corsair then works as a normal screen. Tap it again to bring the panel back.
 
 **02 Agents.** One card for each of the last eight Claude Code sessions. Tap a card to open that session in Claude. A card is in one of four states:
+
 - **Needs you** (orange): Claude is waiting on a permission or an answer.
 - **Working**: Claude is running.
 - **Done**: Claude finished and is waiting for your next prompt. Tapping the card sets it back to Idle.

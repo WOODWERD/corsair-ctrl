@@ -4,3 +4,9 @@ spike/panel/EdgeCtrlSpike
 spike/panel/*.app/
 .DS_Store
 .claude/
+# docs site: built pages, the shared theme, and the pages copied in from the repo root
+site/
+docs-theme
+docs/index.md
+docs/changelog.md
+docs/notices.md
