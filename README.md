@@ -50,7 +50,11 @@ To quit: Settings > Quit on the panel, or `pkill -x CorsairCtrl`.
 
 Restart the app after editing it.
 
+## Key row
+Eight keys under the Agents board, for working without a keyboard: Esc, Undo, Copy, Paste, Grab area, Grab window, Prev app, Next app. The first four go to the app in front. The grabs start macOS's own screenshot crosshair and put the image on the clipboard: drag an area, or click a window, with the mouse. Next app and Prev app page through every open app, one per press, forward and back, most recently used first; pause four seconds and it starts over.
+
 ## Known limits
+- If macOS does not answer the screenshot shortcut from the panel, the app starts the `screencapture` tool itself. macOS then asks once for Screen Recording permission.
 - A card gets its chat name and opens its own session by reading three fields (two ids and the title) from the Claude app's private session records. If a Claude update moves those records, cards show the folder only and fall back to just bringing Claude forward.
 - The panel's hands-free state is its own guess. If you stop Wispr from the Mac instead of the panel, tap Discard to reset it.
 - The top 34 px are left empty because macOS draws its menu bar there.

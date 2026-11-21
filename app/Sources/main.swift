@@ -8,7 +8,7 @@ import ServiceManagement
 import ApplicationServices
 
 let PORT: UInt16 = 47616
-let VERSION = "0.3.3"
+let VERSION = "0.4.0"
 let CLAUDE_BUNDLE = "com.anthropic.claudefordesktop"
 
 struct Config: Codable {
@@ -275,6 +275,43 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
             let name = m["name"] as? String ?? ""
             guard AXIsProcessTrusted() else { note("Key not sent: Accessibility is not allowed"); return }
             if keys.perform(name), name != "pttUp" { note("Key \(name) → \(front?.localizedName ?? "?")") }
+        case "edit":
+            let key = m["key"] as? String ?? ""
+            guard AXIsProcessTrusted() else { note("Key not sent: Accessibility is not allowed"); return }
+            let app = front?.localizedName ?? "?"
+            switch key {
+            case "esc", "undo", "copy", "paste":
+                if keys.perform(key) { note("\(key.capitalized) → \(app)") }
+            case "switch", "switch-back":
+                // Pages through every open app, one per press.
+                if let id = apps.next(frontID: front?.bundleIdentifier ?? "", back: key == "switch-back") {
+                    apps.activate(id) { [weak self] line in self?.note(line) }
+                } else { note("No other app to switch to") }
+            case "grab-area", "grab-window":
+                let window = key == "grab-window"
+                keys.perform("grab")
+                // In the screenshot crosshair, Space switches to picking a window.
+                if window { DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in self?.keys.perform("space") } }
+                note(window ? "Grab window: click a window. It goes to the clipboard." : "Grab area: drag with the mouse. It goes to the clipboard.")
+                // Check that macOS answered the shortcut; if not, start its screenshot tool directly.
+                DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.35) { [weak self] in
+                    let p = Process()
+                    p.executableURL = URL(fileURLWithPath: "/usr/bin/pgrep")
+                    p.arguments = ["-x", "screencaptureui"]
+                    p.standardOutput = FileHandle.nullDevice
+                    try? p.run(); p.waitUntilExit()
+                    let up = p.terminationStatus == 0
+                    Log.write("[grab] shortcut \(up ? "answered" : "not answered"); \(window ? "window" : "area")")
+                    guard !up else { return }
+                    let s = Process()
+                    s.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                    s.arguments = window ? ["-i", "-W", "-c"] : ["-i", "-c"]
+                    do { try s.run() } catch {
+                        DispatchQueue.main.async { self?.note("Screen grab could not start: \(error.localizedDescription)") }
+                    }
+                }
+            default: break
+            }
         case "jump":
             guard let id = m["id"] as? String else { return }
             store.markRead(id)

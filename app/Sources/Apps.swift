@@ -40,6 +40,33 @@ final class Apps {
         if recent.count > 64 { recent.removeLast(recent.count - 64) }
     }
 
+    private var cycle: [String] = []        // the order being paged through
+    private var cycleAt = 0
+    private var cycleTime = Date.distantPast
+
+    /// The next open app, for paging through all of them with repeated presses. The order is
+    /// fixed at the first press (front app, then most recently used) and kept while presses
+    /// keep coming, the way Command-Tab keeps its order while Command is held. After a
+    /// pause of four seconds the next press starts over from the app then in front.
+    func next(frontID: String, back: Bool = false) -> String? {
+        let open = NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular }
+            .compactMap { $0.bundleIdentifier }.filter { $0 != own }
+        let openSet = Set(open)
+        if cycle.isEmpty || Date().timeIntervalSince(cycleTime) > 4 {
+            var order = openSet.contains(frontID) ? [frontID] : []
+            for id in recent + open.sorted() where openSet.contains(id) && !order.contains(id) { order.append(id) }
+            cycle = order
+            cycleAt = 0
+        }
+        cycle.removeAll { !openSet.contains($0) }
+        guard cycle.count > 1 else { return nil }
+        cycleAt = (cycleAt + (back ? cycle.count - 1 : 1)) % cycle.count
+        cycleTime = Date()
+        let id = cycle[cycleAt]
+        if urls[id] == nil { urls[id] = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) }
+        return id
+    }
+
     private func url(_ id: String) -> URL? { urls[id] }
     private func name(_ id: String) -> String { names[id] ?? id }
 

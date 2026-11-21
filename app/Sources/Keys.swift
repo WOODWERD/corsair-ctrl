@@ -48,6 +48,13 @@ final class Keys {
         case "sendNow": tap(kRet, .maskCommand)
         case "discard": tap(kEsc)
         case "newChat": tap(kSpace, .maskAlternate)
+        // Key row. Z, C, V and 4 by key position, as a keyboard sends them.
+        case "esc": tap(kEsc)
+        case "undo": tap(6, .maskCommand)
+        case "copy": tap(8, .maskCommand)
+        case "paste": tap(9, .maskCommand)
+        case "grab": tap(21, [.maskCommand, .maskControl, .maskShift])   // area to the clipboard
+        case "space": tap(kSpace)
         default: return false
         }
         return true
