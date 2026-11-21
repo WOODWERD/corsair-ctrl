@@ -107,6 +107,11 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
         glance.refreshWeather()
         glance.refreshCalendar()
         placeStartApp(open: true)
+        // One-off repair: `defaults write com.woodwerd.corsairctrl returnApp <bundle id>` puts that app's window back on the main display at the next start.
+        if let id = UserDefaults.standard.string(forKey: "returnApp") {
+            UserDefaults.standard.removeObject(forKey: "returnApp")
+            returnWindow(id: id, name: id)
+        }
         refreshStatus()
         Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in self?.refreshStatus() }
         Timer.scheduledTimer(withTimeInterval: 15 * 60, repeats: true) { [weak self] _ in self?.glance.refreshWeather() }
@@ -140,6 +145,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
         DispatchQueue.global(qos: .utility).async { [weak self] in
             // At login the app, its window and the Corsair itself can all arrive late: keep trying for a minute.
             for _ in 0..<60 {
+                guard UserDefaults.standard.string(forKey: "startApp") == id else { return }   // the choice changed
                 var target: CGRect?
                 var pid: pid_t?
                 DispatchQueue.main.sync {
@@ -174,6 +180,18 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
                             return
                         }
                         var p = target.origin, z = target.size
+                        // Remember where the window was, so turning the setting off can put it back.
+                        if !open {
+                            whereIsIt()
+                            var was = CGSize.zero
+                            var sr: CFTypeRef?
+                            if AXUIElementCopyAttributeValue(win, kAXSizeAttribute as CFString, &sr) == .success, let v = sr {
+                                AXValueGetValue(v as! AXValue, .cgSize, &was)
+                            }
+                            if was.width > 100, abs(at.x - p.x) > 40 || abs(at.y - p.y) > 40 {
+                                UserDefaults.standard.set("\(Int(at.x)),\(Int(at.y)),\(Int(was.width)),\(Int(was.height))", forKey: "startAppWas")
+                            }
+                        }
                         if let pv = AXValueCreate(.cgPoint, &p), let zv = AXValueCreate(.cgSize, &z) {
                             AXUIElementSetAttributeValue(win, kAXPositionAttribute as CFString, pv)
                             AXUIElementSetAttributeValue(win, kAXSizeAttribute as CFString, zv)
@@ -190,6 +208,32 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
                 Thread.sleep(forTimeInterval: 1)
             }
             Log.write("[place] gave up on \(name): no window, no Corsair, or no Accessibility")
+        }
+    }
+
+    /// Puts an app's window back where it was before the panel moved it, or, when that is
+    /// not known, onto the main display.
+    private func returnWindow(id: String, name: String) {
+        let saved = (UserDefaults.standard.string(forKey: "startAppWas") ?? "").split(separator: ",").compactMap { Double($0) }
+        UserDefaults.standard.removeObject(forKey: "startAppWas")
+        guard let pid = NSRunningApplication.runningApplications(withBundleIdentifier: id).first?.processIdentifier,
+              let primary = NSScreen.screens.first else { return }
+        let v = primary.visibleFrame
+        var rect = CGRect(x: v.minX + v.width * 0.1, y: primary.frame.maxY - v.maxY + v.height * 0.05, width: v.width * 0.8, height: v.height * 0.9)
+        if saved.count == 4 { rect = CGRect(x: saved[0], y: saved[1], width: saved[2], height: saved[3]) }
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            let app = AXUIElementCreateApplication(pid)
+            AXUIElementSetMessagingTimeout(app, 1)
+            var ref: CFTypeRef?
+            guard AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &ref) == .success,
+                  let win = (ref as? [AXUIElement])?.first else { Log.write("[place] \(name): no window to put back"); return }
+            var p = rect.origin, z = rect.size
+            guard let pv = AXValueCreate(.cgPoint, &p), let zv = AXValueCreate(.cgSize, &z) else { return }
+            AXUIElementSetAttributeValue(win, kAXPositionAttribute as CFString, pv)
+            AXUIElementSetAttributeValue(win, kAXSizeAttribute as CFString, zv)
+            AXUIElementSetAttributeValue(win, kAXPositionAttribute as CFString, pv)
+            Log.write("[place] \(name) window put back at x \(Int(p.x)) y \(Int(p.y)), \(Int(z.width)) × \(Int(z.height))")
+            DispatchQueue.main.async { self?.note("\(name) window put back") }
         }
     }
 
@@ -425,6 +469,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
                 note("\(name) will open beside the panel at start")
                 placeStartApp(open: false)
             } else {
+                if let id = d.string(forKey: "startApp") { returnWindow(id: id, name: d.string(forKey: "startAppName") ?? id) }
                 d.removeObject(forKey: "startApp"); d.removeObject(forKey: "startAppName")
                 note("No app is opened at start")
             }
