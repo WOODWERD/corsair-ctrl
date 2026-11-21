@@ -153,7 +153,9 @@ body.kiosk .frame{outline:0}
 .board{flex:1;min-height:0;display:flex;flex-direction:column;gap:13px}
 /* Key row under the board. With it the cards are 192 tall, so they tighten. */
 .keys{flex:none;height:89px;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:13px}
-.keys .btn.glyph{min-height:0;height:89px;border-radius:13px}
+.keys .btn.glyph{min-height:0;height:89px;border-radius:13px;background:#595959;border-color:#595959;color:#fff}
+.keys .btn.glyph span{color:#fff}
+.keys .btn.glyph:active{background:#737373;border-color:#737373}
 .board .card{padding:16px;gap:5px}
 .board .card.needs{padding:14px}
 .board .card .la{-webkit-line-clamp:1;flex:none}
