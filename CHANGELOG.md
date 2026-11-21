@@ -2,6 +2,9 @@
 
 What changed in Corsair Ctrl, newest first. The reasons behind each change are in [spec.md](https://github.com/WOODWERD/corsair-ctrl/blob/main/spec.md).
 
+## v0.4.3 — 2026-11-21
+- Grab area and Grab window press your Mac's own screenshot shortcut, read from Keyboard settings, so they work when that shortcut has been changed from the default. Screen Recording permission is not needed.
+
 ## v0.4.2 — 2026-11-21
 - Turning "Open app at start" off puts that app's window back where it was.
 

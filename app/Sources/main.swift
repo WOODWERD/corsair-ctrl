@@ -8,7 +8,7 @@ import ServiceManagement
 import ApplicationServices
 
 let PORT: UInt16 = 47616
-let VERSION = "0.4.2"
+let VERSION = "0.4.3"
 let CLAUDE_BUNDLE = "com.anthropic.claudefordesktop"
 
 struct Config: Codable {
@@ -402,28 +402,27 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
                     apps.activate(id) { [weak self] line in self?.note(line) }
                 } else { note("No other app to switch to") }
             case "grab-area", "grab-window":
+                // Press this Mac's own shortcut for "copy picture of selected area to the clipboard".
+                // It can be changed in System Settings > Keyboard > Keyboard Shortcuts > Screenshots,
+                // so read what it is set to rather than assume Command-Control-Shift-4.
                 let window = key == "grab-window"
-                keys.perform("grab")
-                // In the screenshot crosshair, Space switches to picking a window.
-                if window { DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in self?.keys.perform("space") } }
-                note(window ? "Grab window: click a window. It goes to the clipboard." : "Grab area: drag with the mouse. It goes to the clipboard.")
-                // Check that macOS answered the shortcut; if not, start its screenshot tool directly.
-                DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.35) { [weak self] in
-                    let p = Process()
-                    p.executableURL = URL(fileURLWithPath: "/usr/bin/pgrep")
-                    p.arguments = ["-x", "screencaptureui"]
-                    p.standardOutput = FileHandle.nullDevice
-                    try? p.run(); p.waitUntilExit()
-                    let up = p.terminationStatus == 0
-                    Log.write("[grab] shortcut \(up ? "answered" : "not answered"); \(window ? "window" : "area")")
-                    guard !up else { return }
-                    let s = Process()
-                    s.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-                    s.arguments = window ? ["-i", "-W", "-c"] : ["-i", "-c"]
-                    do { try s.run() } catch {
-                        DispatchQueue.main.async { self?.note("Screen grab could not start: \(error.localizedDescription)") }
+                var code: CGKeyCode = 21
+                var flags: CGEventFlags = [.maskCommand, .maskControl, .maskShift]
+                let hot = (UserDefaults(suiteName: "com.apple.symbolichotkeys")?.dictionary(forKey: "AppleSymbolicHotKeys")?["31"] as? [String: Any])
+                if let hot {
+                    guard (hot["enabled"] as? NSNumber)?.boolValue != false else {
+                        note("The Mac's shortcut for copying a screen area is switched off in Keyboard settings"); return
+                    }
+                    if let p = (hot["value"] as? [String: Any])?["parameters"] as? [NSNumber], p.count >= 3 {
+                        code = CGKeyCode(p[1].intValue)
+                        flags = CGEventFlags(rawValue: UInt64(p[2].intValue))
                     }
                 }
+                Log.write("[grab] \(window ? "window" : "area"): key code \(code), modifiers \(flags.rawValue)")
+                keys.shortcut(code, flags)
+                // In the crosshair, Space switches to picking a window.
+                if window { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in self?.keys.perform("space") } }
+                note(window ? "Grab window: click a window. It goes to the clipboard." : "Grab area: drag with the mouse. It goes to the clipboard.")
             default: break
             }
         case "jump":

@@ -29,6 +29,16 @@ final class Keys {
     private func tapChord() { chordDown(); usleep(60_000); chordUp() }
     private func tap(_ k: CGKeyCode, _ flags: CGEventFlags = []) { key(k, true, flags); key(k, false, flags) }
 
+    /// A shortcut pressed the way a keyboard does it: modifiers down, the key, modifiers up.
+    func shortcut(_ k: CGKeyCode, _ flags: CGEventFlags) {
+        let mods: [(CGEventFlags, CGKeyCode)] = [(.maskCommand, 55), (.maskControl, kCtrl), (.maskAlternate, kOpt), (.maskShift, 56)]
+        var held: CGEventFlags = []
+        for (f, code) in mods where flags.contains(f) { held.insert(f); key(code, true, held) }
+        usleep(12_000)
+        key(k, true, flags); usleep(40_000); key(k, false, flags)
+        for (f, code) in mods.reversed() where flags.contains(f) { held.remove(f); key(code, false, held) }
+    }
+
     /// Returns false for an unknown name.
     @discardableResult
     func perform(_ name: String) -> Bool {
@@ -53,7 +63,6 @@ final class Keys {
         case "undo": tap(6, .maskCommand)
         case "copy": tap(8, .maskCommand)
         case "paste": tap(9, .maskCommand)
-        case "grab": tap(21, [.maskCommand, .maskControl, .maskShift])   // area to the clipboard
         case "space": tap(kSpace)
         default: return false
         }

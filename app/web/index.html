@@ -838,7 +838,7 @@ setInterval(() => { if (ST) renderGlance(); }, 30000);
 if (!bridge) {
   const now = Date.now() / 1000;
   window.ctrlUpdate({
-    version: "0.4.2", theme: new URLSearchParams(location.search).get("theme") || "auto", front: "Claude", lastLine: "20:41:02  Stop esp-ctrl",
+    version: "0.4.3", theme: new URLSearchParams(location.search).get("theme") || "auto", front: "Claude", lastLine: "20:41:02  Stop esp-ctrl",
     sessions: location.search.includes("empty") ? [] : [
       { id: "3a4b7578-aaaa", name: "edge-ctrl", state: "needs", since: now - 120, last: "Claude needs your permission to use Bash" },
       { id: "7f20d1c4-bbbb", name: "esp-ctrl", state: "working", since: now - 38, last: "Using Edit" },

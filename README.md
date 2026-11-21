@@ -20,7 +20,7 @@ The panel never takes focus. Whatever app you were working in stays in front, so
 - **Done**: Claude finished and is waiting for your next prompt. Tapping the card sets it back to Idle.
 - **Idle**: nothing is happening.
 
-**Key row.** Eight keys under the cards: Esc, Undo, Copy, Paste, Grab area, Grab window, Prev app, Next app. The first four go to the app in front. The grabs start macOS's own screenshot crosshair and put the image on the clipboard: drag an area, or click a window, with the mouse. Prev app and Next app page through every open app, one per press, most recently used first; pause four seconds and it starts over.
+**Key row.** Eight keys under the cards: Esc, Undo, Copy, Paste, Grab area, Grab window, Prev app, Next app. The first four go to the app in front. The grabs press your Mac's own shortcut for copying a screen area to the clipboard, whatever it is set to in Keyboard settings: drag an area, or click a window, with the mouse, then paste. Prev app and Next app page through every open app, one per press, most recently used first; pause four seconds and it starts over.
 
 **03 Apps.** Four pinned apps, then every other open app, most recently used first. Tap one to bring it forward. Drag the strip to scroll.
 
@@ -87,7 +87,7 @@ corsair-ctrl/
 Open `app/web/index.html` in a browser to see the panel with sample data.
 
 ## Known limits
-- If macOS does not answer the screenshot shortcut from the panel, the app starts the `screencapture` tool itself. macOS then asks once for Screen Recording permission.
+- The grab keys need the Mac's "Copy picture of selected area to the clipboard" shortcut switched on, under Keyboard > Keyboard Shortcuts > Screenshots.
 - A card gets its chat name and opens its own session by reading three fields (two ids and the title) from the Claude app's private session records. If a Claude update moves those records, cards show the folder only and fall back to just bringing Claude forward.
 - The panel's hands-free state is its own guess. If you stop Wispr from the Mac instead of the panel, tap Discard to reset it.
 - The top 34 px are left empty because macOS draws its menu bar there.
