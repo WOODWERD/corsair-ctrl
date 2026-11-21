@@ -53,6 +53,9 @@ Restart the app after editing it.
 ## Key row
 Eight keys under the Agents board, for working without a keyboard: Esc, Undo, Copy, Paste, Grab area, Grab window, Prev app, Next app. The first four go to the app in front. The grabs start macOS's own screenshot crosshair and put the image on the clipboard: drag an area, or click a window, with the mouse. Next app and Prev app page through every open app, one per press, forward and back, most recently used first; pause four seconds and it starts over.
 
+## After a reboot
+With Start at login on (Settings), the panel comes back by itself, folded or unfolded as you left it. To have one app waiting beside the folded panel, bring that app to the front, open Settings and tap "Open <app> at start". At each launch the panel opens it and moves its window to the right of the fold rail.
+
 ## Known limits
 - If macOS does not answer the screenshot shortcut from the panel, the app starts the `screencapture` tool itself. macOS then asks once for Screen Recording permission.
 - A card gets its chat name and opens its own session by reading three fields (two ids and the title) from the Claude app's private session records. If a Claude update moves those records, cards show the folder only and fall back to just bringing Claude forward.

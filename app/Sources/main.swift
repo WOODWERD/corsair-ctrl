@@ -8,7 +8,7 @@ import ServiceManagement
 import ApplicationServices
 
 let PORT: UInt16 = 47616
-let VERSION = "0.4.0"
+let VERSION = "0.4.1"
 let CLAUDE_BUNDLE = "com.anthropic.claudefordesktop"
 
 struct Config: Codable {
@@ -41,7 +41,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
     private var server: Server?
     private var front = NSWorkspace.shared.frontmostApplication
     private var touchRunning = false
-    private var folded = false
+    private var folded = UserDefaults.standard.bool(forKey: "folded")
     private var iconsSent: Set<String> = []
     private var loginEnabled = false
     private var lastLine = ""
@@ -106,6 +106,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
         media.start()
         glance.refreshWeather()
         glance.refreshCalendar()
+        placeStartApp(open: true)
         refreshStatus()
         Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in self?.refreshStatus() }
         Timer.scheduledTimer(withTimeInterval: 15 * 60, repeats: true) { [weak self] _ in self?.glance.refreshWeather() }
@@ -122,6 +123,74 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
             return NSScreen.screens[i]
         }
         return NSScreen.screens.first { $0.frame.width / $0.frame.height > 3.2 }
+    }
+
+    /// The app chosen in Settings is opened and its window moved into the part of the Corsair
+    /// to the right of the fold rail, so it shows when the panel is folded. Done once, at
+    /// start or when the choice is made; a window dragged away later is left alone.
+    /// Accessibility calls can wait on the other app, so they run off the main thread.
+    private func placeStartApp(open: Bool) {
+        guard let id = UserDefaults.standard.string(forKey: "startApp") else { return }
+        let name = UserDefaults.standard.string(forKey: "startAppName") ?? id
+        if open, let u = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) {
+            let cfg = NSWorkspace.OpenConfiguration()
+            cfg.activates = false
+            NSWorkspace.shared.openApplication(at: u, configuration: cfg) { _, _ in }
+        }
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            // At login the app, its window and the Corsair itself can all arrive late: keep trying for a minute.
+            for _ in 0..<60 {
+                var target: CGRect?
+                var pid: pid_t?
+                DispatchQueue.main.sync {
+                    guard let self, let s = self.corsairScreen(), let primary = NSScreen.screens.first else { return }
+                    let left = s.frame.minX + (439 * s.frame.height / 720).rounded()
+                    let v = s.visibleFrame
+                    // Accessibility measures from the top left of the main screen.
+                    target = CGRect(x: left, y: primary.frame.maxY - v.maxY, width: s.frame.maxX - left, height: v.height)
+                    pid = NSRunningApplication.runningApplications(withBundleIdentifier: id).first?.processIdentifier
+                }
+                if let target, let pid, AXIsProcessTrusted() {
+                    let app = AXUIElementCreateApplication(pid)
+                    AXUIElementSetMessagingTimeout(app, 1)
+                    var ref: CFTypeRef?
+                    if AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &ref) == .success,
+                       let win = (ref as? [AXUIElement])?.first {
+                        // A full-screen window cannot be moved, and does not need to be when it is on the Corsair.
+                        var fs: CFTypeRef?
+                        AXUIElementCopyAttributeValue(win, "AXFullScreen" as CFString, &fs)
+                        var at = CGPoint(x: -99999, y: -99999)
+                        func whereIsIt() {
+                            var pr: CFTypeRef?
+                            if AXUIElementCopyAttributeValue(win, kAXPositionAttribute as CFString, &pr) == .success, let v = pr {
+                                AXValueGetValue(v as! AXValue, .cgPoint, &at)
+                            }
+                        }
+                        if fs as? Bool == true {
+                            whereIsIt()
+                            let here = at.x >= target.minX - 480 && at.x < target.maxX && abs(at.y - target.minY) < 60
+                            Log.write("[place] \(name) is full screen \(here ? "on the Corsair" : "on another display"); left as it is")
+                            DispatchQueue.main.async { self?.note(here ? "\(name) is full screen on the Corsair" : "\(name) is full screen on another display; not moved") }
+                            return
+                        }
+                        var p = target.origin, z = target.size
+                        if let pv = AXValueCreate(.cgPoint, &p), let zv = AXValueCreate(.cgSize, &z) {
+                            AXUIElementSetAttributeValue(win, kAXPositionAttribute as CFString, pv)
+                            AXUIElementSetAttributeValue(win, kAXSizeAttribute as CFString, zv)
+                            AXUIElementSetAttributeValue(win, kAXPositionAttribute as CFString, pv)
+                            // Trust where the window ended up, not the return codes.
+                            whereIsIt()
+                            let ok = abs(at.x - p.x) < 40 && abs(at.y - p.y) < 40
+                            Log.write("[place] \(name) window \(ok ? "moved" : "could not be moved") to x \(Int(p.x)) y \(Int(p.y)), \(Int(z.width)) × \(Int(z.height))\(ok ? "" : "; it is at x \(Int(at.x)) y \(Int(at.y))")")
+                            DispatchQueue.main.async { self?.note(ok ? "\(name) placed beside the panel" : "\(name) would not let its window be moved") }
+                            return
+                        }
+                    }
+                }
+                Thread.sleep(forTimeInterval: 1)
+            }
+            Log.write("[place] gave up on \(name): no window, no Corsair, or no Accessibility")
+        }
     }
 
     /// Show on the Corsair. With no Corsair attached, hide rather than cover another display.
@@ -265,6 +334,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
             "media": media.state,
             "lastLine": lastLine,
             "folded": folded,
+            "startApp": UserDefaults.standard.string(forKey: "startAppName") ?? "",
         ]
     }
 
@@ -343,8 +413,22 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
             media.command(cmd, value: (m["value"] as? NSNumber)?.doubleValue)
         case "fold":
             folded = m["on"] as? Bool ?? !folded
+            UserDefaults.standard.set(folded, forKey: "folded")
             place()
             note(folded ? "Panel folded away" : "Panel brought back")
+        case "startapp":
+            let d = UserDefaults.standard
+            if m["on"] as? Bool == true {
+                guard let a = front, let id = a.bundleIdentifier, id != Bundle.main.bundleIdentifier else { note("Bring the app to the front first, then set it"); return }
+                let name = a.localizedName ?? id
+                d.set(id, forKey: "startApp"); d.set(name, forKey: "startAppName")
+                note("\(name) will open beside the panel at start")
+                placeStartApp(open: false)
+            } else {
+                d.removeObject(forKey: "startApp"); d.removeObject(forKey: "startAppName")
+                note("No app is opened at start")
+            }
+            push()
         case "theme":
             if let t = m["value"] as? String, ["auto", "light", "dark"].contains(t) {
                 UserDefaults.standard.set(t, forKey: "theme"); push()

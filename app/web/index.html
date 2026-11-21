@@ -508,6 +508,7 @@ body.folded .rail{border-right:1px solid var(--line-strong)}
       <button class="btn" id="b-hooks"></button>
       <button class="btn" id="b-ax">Open Accessibility settings</button>
       <button class="btn" id="b-login"></button>
+      <button class="btn" id="b-start"></button>
       <button class="btn stop" id="b-quit">Quit Corsair Ctrl</button>
       <button class="btn primary" id="close-settings">Done</button>
     </div>
@@ -558,6 +559,7 @@ function renderStatus() {
   $("b-hooks").textContent = s.hooks ? "Remove session hooks" : "Install session hooks";
   $("b-ax").hidden = s.ax;
   $("b-login").textContent = s.login ? "Start at login: on" : "Start at login: off";
+  $("b-start").textContent = ST.startApp ? `At start: ${ST.startApp} · turn off` : `Open ${ST.front || "the front app"} at start`;
   $("lastline").textContent = ST.lastLine || "";
   document.documentElement.dataset.theme = ST.theme;
   document.body.classList.toggle("folded", !!ST.folded);
@@ -820,6 +822,7 @@ document.querySelectorAll("#seg-theme button").forEach(b => b.onclick = () => po
 $("b-hooks").onclick = () => post({ action: "hooks", mode: ST?.status.hooks ? "remove" : "install" });
 $("b-ax").onclick = () => post({ action: "accessibility" });
 $("b-login").onclick = () => post({ action: "login", on: !ST?.status.login });
+$("b-start").onclick = () => post({ action: "startapp", on: !ST?.startApp });
 $("b-quit").onclick = () => post({ action: "quit" });
 $("next-row").onclick = () => { if (ST && ST.glance.calendar === "unknown") post({ action: "calendar" }); };
 
