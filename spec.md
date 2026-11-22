@@ -1,6 +1,6 @@
 # Corsair Ctrl — agent panel for the XENEON EDGE (spec v0.2)
 
-> 2026-11-21 · Status: **v0.4.4 running on the Corsair. Confirmed by hand: Prev app, Next app, Grab area and Paste. Not yet confirmed: Delete, Esc, Undo, Copy, Grab window, the Open app at start button by touch, and a real reboot.** Project at `~/Code/corsair-ctrl`. App at `app/`; build with `bash app/build.sh`. The panel page `app/web/index.html` opened in a browser is the living preview (sample data). Name: **Corsair Ctrl** (Ctrl family); working name was "Edge Ctrl". Method: spec → design → build. Spike files: `spike/`. Hardware notes: `claude/xeneon-edge-notes.md` in the original CYD project folder (`~/Documents/Claude/Projects/CYD/`).
+> 2026-11-21 · Status: **v0.4.4 running on the Corsair. Confirmed by hand: Prev app, Next app, Grab area, Paste and Delete. Not yet confirmed: Esc, Undo, Copy, Grab window, the Open app at start button by touch, and a real reboot.** Project at `~/Code/corsair-ctrl`. App at `app/`; build with `bash app/build.sh`. The panel page `app/web/index.html` opened in a browser is the living preview (sample data). Name: **Corsair Ctrl** (Ctrl family); working name was "Edge Ctrl". Method: spec → design → build. Spike files: `spike/`. Hardware notes: `claude/xeneon-edge-notes.md` in the original CYD project folder (`~/Documents/Claude/Projects/CYD/`).
 
 v0.2 folds the spike results into v0.1. Earlier decisions are kept as written.
 
