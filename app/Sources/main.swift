@@ -8,7 +8,7 @@ import ServiceManagement
 import ApplicationServices
 
 let PORT: UInt16 = 47616
-let VERSION = "0.4.3"
+let VERSION = "0.4.4"
 let CLAUDE_BUNDLE = "com.anthropic.claudefordesktop"
 
 struct Config: Codable {
@@ -394,6 +394,9 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
             guard AXIsProcessTrusted() else { note("Key not sent: Accessibility is not allowed"); return }
             let app = front?.localizedName ?? "?"
             switch key {
+            case "backspace":
+                // Held, it repeats many times a second: say so once, not for every character.
+                if keys.perform(key), m["repeat"] as? Bool != true { note("Delete → \(app)") }
             case "esc", "undo", "copy", "paste":
                 if keys.perform(key) { note("\(key.capitalized) → \(app)") }
             case "switch", "switch-back":

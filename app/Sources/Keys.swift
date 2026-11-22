@@ -63,6 +63,7 @@ final class Keys {
         case "undo": tap(6, .maskCommand)
         case "copy": tap(8, .maskCommand)
         case "paste": tap(9, .maskCommand)
+        case "backspace": tap(51)
         case "space": tap(kSpace)
         default: return false
         }

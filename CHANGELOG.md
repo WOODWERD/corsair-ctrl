@@ -2,6 +2,9 @@
 
 What changed in Corsair Ctrl, newest first. The reasons behind each change are in [spec.md](https://github.com/WOODWERD/corsair-ctrl/blob/main/spec.md).
 
+## v0.4.4 — 2026-11-21
+- **Delete** in Flow Ctrl, beside Hands-free and Discard. A tap deletes one character backwards; hold it to keep deleting. The three buttons are now square, icon over name.
+
 ## v0.4.3 — 2026-11-21
 - Grab area and Grab window press your Mac's own screenshot shortcut, read from Keyboard settings, so they work when that shortcut has been changed from the default. Screen Recording permission is not needed.
 

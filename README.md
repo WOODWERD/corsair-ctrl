@@ -26,7 +26,7 @@ The panel never takes focus. Whatever app you were working in stays in front, so
 
 **04 Media Ctrl.** What is playing in Spotify or Apple Music, with previous, play or pause, next, volume, and a **More** view (skip 15 seconds, shuffle, repeat, like, mute). The accent follows the player: green for Spotify, red for Music. With neither playing, the buttons send the system media keys.
 
-**05 Flow Ctrl.** Voice through Wispr Flow. **Hold to talk** dictates while your finger is down. **Hands-free** starts dictation that runs until you stop it. **Send** presses Return, **Send now** presses Command-Return, and **Discard** presses Esc.
+**05 Flow Ctrl.** Voice through Wispr Flow. **Hold to talk** dictates while your finger is down. **Hands-free** starts dictation that runs until you stop it. **Send** presses Return, **Send now** presses Command-Return, **Discard** presses Esc, and **Delete** removes one character backwards and repeats while held, for taking back the end of what you just said.
 
 ## Needs
 - macOS 14 or later, with Xcode or the Command Line Tools.
