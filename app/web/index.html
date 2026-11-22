@@ -75,6 +75,11 @@ body.kiosk .frame{outline:0}
 
 /* Row 1: left clear for the macOS menu bar, which draws over the top 30pt. */
 .reserve{background:var(--ground)}
+/* Status strip over the header while the Dock is on the Corsair and taps are rejected. */
+.dockbar{position:absolute;left:0;top:34px;width:100%;height:55px;z-index:8;display:none;align-items:center;gap:13px;padding:0 21px;background:var(--attention-tint);border-bottom:2px solid var(--attention);color:var(--ink);font-size:var(--t-body);white-space:nowrap;overflow:hidden}
+.dockbar.on{display:flex}
+.dockbar b{font-weight:600}
+.dockbar code{font-family:var(--mono);font-size:var(--t-cap);color:var(--ink-soft)}
 .reserve.show{background:repeating-linear-gradient(135deg,var(--line) 0 8px,transparent 8px 16px);display:flex;align-items:center;justify-content:center;font-size:var(--t-micro);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
 
 /* Row 2: product header */
@@ -327,6 +332,7 @@ body.folded .rail{border-right:1px solid var(--line-strong)}
 <body>
 <div class="panel" id="panel">
   <div class="reserve"></div>
+  <div class="dockbar" id="dockbar" role="status"><span class="dot attention" id="dockbar-dot"></span><b id="dockbar-lead"></b><span id="dockbar-rest"></span><code id="dockbar-cmd"></code></div>
 
   <header class="header">
     <span class="name">Corsair Ctrl</span>
@@ -787,9 +793,22 @@ function renderVoice() {
   }
 }
 
+const DOCK = {
+  restarting: ["The Dock is on the Corsair, so taps are off.", "Restarting the Dock now.", ""],
+  held: ["The Dock is on the Corsair, so taps are off.", "It came back after a restart. To restart it again, in Terminal:", "launchctl kickstart -k gui/$(id -u)/com.apple.Dock.agent"],
+  down: ["The Dock did not start again.", "Apps will not change Spaces until it does. In Terminal:", "launchctl kickstart gui/$(id -u)/com.apple.Dock.agent"],
+};
+function renderDock() {
+  const d = DOCK[ST.dock];
+  $("dockbar").classList.toggle("on", !!d);
+  if (!d) return;
+  $("dockbar-dot").className = ST.dock === "restarting" ? "dot attention pulse" : "dot attention";
+  $("dockbar-lead").textContent = d[0]; $("dockbar-rest").textContent = d[1]; $("dockbar-cmd").textContent = d[2];
+}
+
 function render() {
   if (!ST) return;
-  renderStatus(); renderGlance(); renderBoard(); renderApps(); renderMedia(); renderVoice();
+  renderDock(); renderStatus(); renderGlance(); renderBoard(); renderApps(); renderMedia(); renderVoice();
 }
 window.ctrlUpdate = s => { ST = s; render(); };
 window.ctrlIcons = m => { Object.assign(ICONS, m); appsKey = ""; renderApps(); };
@@ -852,7 +871,7 @@ setInterval(() => { if (ST) renderGlance(); }, 30000);
 if (!bridge) {
   const now = Date.now() / 1000;
   window.ctrlUpdate({
-    version: "0.4.4", theme: new URLSearchParams(location.search).get("theme") || "auto", front: "Claude", lastLine: "20:41:02  Stop esp-ctrl",
+    version: "0.4.5", dock: new URLSearchParams(location.search).get("dock") || "", theme: new URLSearchParams(location.search).get("theme") || "auto", front: "Claude", lastLine: "20:41:02  Stop esp-ctrl",
     sessions: location.search.includes("empty") ? [] : [
       { id: "3a4b7578-aaaa", name: "edge-ctrl", state: "needs", since: now - 120, last: "Claude needs your permission to use Bash" },
       { id: "7f20d1c4-bbbb", name: "esp-ctrl", state: "working", since: now - 38, last: "Using Edit" },

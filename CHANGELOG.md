@@ -2,6 +2,9 @@
 
 What changed in Corsair Ctrl, newest first. The reasons behind each change are in [spec.md](https://github.com/WOODWERD/corsair-ctrl/blob/main/spec.md).
 
+## v0.4.5 — 2026-11-22
+- **Dock guard.** If the macOS Dock moves onto the Corsair, its invisible window covers the panel and the touch driver rejects every tap. Corsair Ctrl now notices within about ten seconds, restarts the Dock, checks that it came back, and shows a strip across the top of the panel while it does. It restarts the Dock at most once in ten minutes.
+
 ## v0.4.4 — 2026-11-21
 - **Delete** in Flow Ctrl, beside Hands-free and Discard. A tap deletes one character backwards; hold it to keep deleting. The three buttons are now square, icon over name.
 

@@ -91,4 +91,5 @@ Open `app/web/index.html` in a browser to see the panel with sample data.
 - A card gets its chat name and opens its own session by reading three fields (two ids and the title) from the Claude app's private session records. If a Claude update moves those records, cards show the folder only and fall back to just bringing Claude forward.
 - The panel's hands-free state is its own guess. If you stop Wispr from the Mac instead of the panel, tap Discard to reset it.
 - The top 34 px are left empty because macOS draws its menu bar there.
+- If the Dock moves onto the Corsair, taps stop: the Dock keeps an invisible window over the display it lives on. Corsair Ctrl restarts the Dock when it sees this, at most once in ten minutes, and shows a strip across the top of the panel while taps are off. The log line starts with `[dock]`.
 - One finger only: tap, hold and drag. No pinch or two-finger gestures.

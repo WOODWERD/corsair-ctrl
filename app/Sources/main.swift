@@ -8,7 +8,7 @@ import ServiceManagement
 import ApplicationServices
 
 let PORT: UInt16 = 47616
-let VERSION = "0.4.4"
+let VERSION = "0.4.5"
 let CLAUDE_BUNDLE = "com.anthropic.claudefordesktop"
 
 struct Config: Codable {
@@ -38,6 +38,8 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
     private let keys = Keys()
     private let links = SessionLinks()
     private let media = Media()
+    private let dockGuard = DockGuard()
+    private var dock = ""
     private var server: Server?
     private var front = NSWorkspace.shared.frontmostApplication
     private var touchRunning = false
@@ -113,6 +115,15 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
             returnWindow(id: id, name: id)
         }
         refreshStatus()
+        dockGuard.onChange = { [weak self] state in self?.dock = state.rawValue; self?.push() }
+        // One-off test: `defaults write com.woodwerd.corsairctrl dockGuardTest -bool true` makes the next start
+        // behave as if the Dock were on the Corsair, which restarts the Dock once.
+        if UserDefaults.standard.bool(forKey: "dockGuardTest") {
+            UserDefaults.standard.removeObject(forKey: "dockGuardTest")
+            Log.write("[dock] test: behaving as if the Dock were on the Corsair")
+            dockGuard.pretendOnce()
+        }
+        Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in self?.checkDock() }
         Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in self?.refreshStatus() }
         Timer.scheduledTimer(withTimeInterval: 15 * 60, repeats: true) { [weak self] _ in self?.glance.refreshWeather() }
         Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in self?.glance.refreshCalendar() }
@@ -238,6 +249,13 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
     }
 
     /// Show on the Corsair. With no Corsair attached, hide rather than cover another display.
+    /// Hands the Corsair's place on the desktop to the Dock guard, which looks off the main thread.
+    private func checkDock() {
+        guard let screen = corsairScreen(),
+              let id = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID else { return }
+        dockGuard.check(display: CGDisplayBounds(id))
+    }
+
     private func place() {
         if let s = corsairScreen() {
             // Folded, the window shrinks to Glance and the fold rail (439 of 2560), on the left,
@@ -274,6 +292,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
             // in time. Hand the keyboard straight back to the app the user was in.
             Log.write("[focus] the panel became the active app; returning focus to \(self?.front?.localizedName ?? "nothing")")
             self?.front?.activate()
+            self?.checkDock()
         }
     }
 
@@ -378,6 +397,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
             "media": media.state,
             "lastLine": lastLine,
             "folded": folded,
+            "dock": dock,
             "startApp": UserDefaults.standard.string(forKey: "startAppName") ?? "",
         ]
     }
