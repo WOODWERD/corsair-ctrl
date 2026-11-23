@@ -8,6 +8,7 @@ v0.2 folds the spike results into v0.1. Earlier decisions are kept as written.
 A always-on touch panel on the Corsair XENEON EDGE (2560 × 720) beside the Mac, for testing agentic workflows: see which Claude Code sessions need attention, jump to them, and talk to Claude without touching the keyboard.
 
 ## Decisions (newest first)
+- 2026-11-23 — **The site says which display it works with** (Drew). The README, which is the site's home page, names the display in full once, the CORSAIR XENEON EDGE 14.5" LCD Touchscreen, and gains a "Works with" section: that display only, Mac only, touch through the separate driver because iCUE does not run on a Mac, and tested on one Mac and one black unit. It also says the app finds the Corsair by shape, not by name. Display facts were read from Corsair's product page. Corsair Ctrl was added to the WOODWERD profile page the same day; it had been missed when it joined the "All WOODWERD tools" menu.
 - 2026-11-22 — **v0.4.5: Dock guard, and it restarts the Dock itself** (Drew chose this over a notice only). Built as proposed below, with these particulars:
   - **Notice.** Every five seconds, and when the panel is made the active app, a background queue reads the window list. The Dock is "on the Corsair" when the first visible window at a point inside the panel belongs to the Dock, is at the Dock's window level and is at least the size of the display.
   - **Wait for a second sighting.** Mission Control puts Dock windows over every display for a moment; one sighting does nothing.

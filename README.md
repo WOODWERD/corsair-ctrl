@@ -1,10 +1,10 @@
 # Corsair Ctrl
 
-A touch panel for the Corsair XENEON EDGE (2560 × 720), for working at a Mac with less keyboard. It shows which Claude Code sessions need you and opens them, switches apps, controls music, sends a few everyday keys, and carries the Flow Ctrl voice buttons for Wispr Flow. Mac only. Part of the WOODWERD Ctrl family.
+A touch panel for the CORSAIR XENEON EDGE 14.5" LCD Touchscreen (2560 × 720), for working at a Mac with less keyboard. It shows which Claude Code sessions need you and opens them, switches apps, controls music, sends a few everyday keys, and carries the Flow Ctrl voice buttons for Wispr Flow. Mac only. Part of the WOODWERD Ctrl family.
 
 ![The Corsair Ctrl panel, shown with sample data](docs/panel.png)
 
-Unofficial. Not affiliated with or endorsed by Corsair, Anthropic, Wispr, Spotify or Apple. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Unofficial. Not affiliated with or endorsed by Corsair, Anthropic, Wispr, Spotify or Apple. See the [notices](THIRD_PARTY_NOTICES.md).
 
 ## The panel, area by area
 The panel never takes focus. Whatever app you were working in stays in front, so keys and dictation land there.
@@ -27,6 +27,14 @@ The panel never takes focus. Whatever app you were working in stays in front, so
 **04 Media Ctrl.** What is playing in Spotify or Apple Music, with previous, play or pause, next, volume, and a **More** view (skip 15 seconds, shuffle, repeat, like, mute). The accent follows the player: green for Spotify, red for Music. With neither playing, the buttons send the system media keys.
 
 **05 Flow Ctrl.** Voice through Wispr Flow. **Hold to talk** dictates while your finger is down. **Hands-free** starts dictation that runs until you stop it. **Send** presses Return, **Send now** presses Command-Return, **Discard** presses Esc, and **Delete** removes one character backwards and repeats while held, for taking back the end of what you just said.
+
+## Works with
+- **Display:** the CORSAIR XENEON EDGE 14.5" LCD Touchscreen, at its native 2560 × 720. The panel is drawn for that screen and no other.
+- **Computer:** a Mac, macOS 14 or later. Not Windows.
+- **Touch:** Corsair's iCUE software does not run on a Mac, so touch comes from the separate driver listed under Needs.
+- **Tested on:** one Mac and one XENEON EDGE, the black one. Corsair sells it in other colours; those have not been tried.
+
+The app finds the Corsair by its shape, the very wide screen, not by its name. It has not been tried with any other wide display.
 
 ## Needs
 - macOS 14 or later, with Xcode or the Command Line Tools.
@@ -72,7 +80,7 @@ With Start at login on (Settings), the panel comes back by itself, folded or unf
 
 Restart the app after editing it.
 
-## What is in this folder
+## What is in the repo
 ```
 corsair-ctrl/
   spec.md             what it is and every decision, newest first
@@ -84,7 +92,7 @@ corsair-ctrl/
   design/             the first mock and design notes; the app has moved on since
   spike/              the test panel that proved the idea; kept for reference
 ```
-Open `app/web/index.html` in a browser to see the panel with sample data.
+Open [app/web/index.html](app/web/index.html) in a browser to see the panel with sample data.
 
 ## Known limits
 - The grab keys need the Mac's "Copy picture of selected area to the clipboard" shortcut switched on, under Keyboard > Keyboard Shortcuts > Screenshots.
