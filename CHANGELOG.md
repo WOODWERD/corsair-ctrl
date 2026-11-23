@@ -2,6 +2,9 @@
 
 What changed in Corsair Ctrl, newest first. The reasons behind each change are in [spec.md](https://github.com/WOODWERD/corsair-ctrl/blob/main/spec.md).
 
+## v0.4.6 — 2026-11-23
+- The strip behind the macOS menu bar, at the top of the panel, now follows the Mac's light or dark appearance instead of the panel's theme. With the Mac dark and the panel light, the menu bar's white icons were on a light strip and could not be seen.
+
 ## v0.4.5 — 2026-11-22
 - **Dock guard.** If the macOS Dock moves onto the Corsair, its invisible window covers the panel and the touch driver rejects every tap. Corsair Ctrl now notices within about ten seconds, restarts the Dock, checks that it came back, and shows a strip across the top of the panel while it does. It restarts the Dock at most once in ten minutes.
 

@@ -73,8 +73,12 @@ body.kiosk .frame{outline:0}
 /* ── Panel: 2560 × 720 ─────────────────────────────────────── */
 .panel{width:2560px;height:720px;background:var(--ground);display:grid;grid-template-rows:34px 55px 576px 55px;overflow:hidden;position:relative}
 
-/* Row 1: left clear for the macOS menu bar, which draws over the top 30pt. */
-.reserve{background:var(--ground)}
+/* Row 1: left clear for the macOS menu bar, which draws over the top 30pt.
+   It follows the Mac's appearance, not the panel's theme: the menu bar's icons are
+   white when the Mac is dark, and vanish on a light strip. */
+:root{--menubar:#F9F7F3}
+@media (prefers-color-scheme: dark){ :root{--menubar:#141311} }
+.reserve{background:var(--menubar)}
 /* Status strip over the header while the Dock is on the Corsair and taps are rejected. */
 .dockbar{position:absolute;left:0;top:34px;width:100%;height:55px;z-index:8;display:none;align-items:center;gap:13px;padding:0 21px;background:var(--attention-tint);border-bottom:2px solid var(--attention);color:var(--ink);font-size:var(--t-body);white-space:nowrap;overflow:hidden}
 .dockbar.on{display:flex}
@@ -871,7 +875,7 @@ setInterval(() => { if (ST) renderGlance(); }, 30000);
 if (!bridge) {
   const now = Date.now() / 1000;
   window.ctrlUpdate({
-    version: "0.4.5", dock: new URLSearchParams(location.search).get("dock") || "", theme: new URLSearchParams(location.search).get("theme") || "auto", front: "Claude", lastLine: "20:41:02  Stop esp-ctrl",
+    version: "0.4.6", dock: new URLSearchParams(location.search).get("dock") || "", theme: new URLSearchParams(location.search).get("theme") || "auto", front: "Claude", lastLine: "20:41:02  Stop esp-ctrl",
     sessions: location.search.includes("empty") ? [] : [
       { id: "3a4b7578-aaaa", name: "edge-ctrl", state: "needs", since: now - 120, last: "Claude needs your permission to use Bash" },
       { id: "7f20d1c4-bbbb", name: "esp-ctrl", state: "working", since: now - 38, last: "Using Edit" },
