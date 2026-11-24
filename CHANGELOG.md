@@ -2,6 +2,9 @@
 
 What changed in Corsair Ctrl, newest first. The reasons behind each change are in [spec.md](https://github.com/WOODWERD/corsair-ctrl/blob/main/spec.md).
 
+## v0.4.7 — 2026-11-23
+- **Grab markup** replaces Grab window in the key row. It starts an area capture in [Shottr](https://shottr.cc), which opens the image for marking up. Grab area is unchanged: it copies the area to the clipboard as before. Grab markup needs Shottr installed.
+
 ## v0.4.6 — 2026-11-23
 - The strip behind the macOS menu bar, at the top of the panel, now follows the Mac's light or dark appearance instead of the panel's theme. With the Mac dark and the panel light, the menu bar's white icons were on a light strip and could not be seen.
 

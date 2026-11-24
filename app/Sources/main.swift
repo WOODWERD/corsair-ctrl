@@ -8,7 +8,7 @@ import ServiceManagement
 import ApplicationServices
 
 let PORT: UInt16 = 47616
-let VERSION = "0.4.6"
+let VERSION = "0.4.7"
 let CLAUDE_BUNDLE = "com.anthropic.claudefordesktop"
 
 struct Config: Codable {
@@ -424,11 +424,28 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
                 if let id = apps.next(frontID: front?.bundleIdentifier ?? "", back: key == "switch-back") {
                     apps.activate(id) { [weak self] line in self?.note(line) }
                 } else { note("No other app to switch to") }
-            case "grab-area", "grab-window":
+            case "grab-markup":
+                // An area capture through Shottr, which then opens it for marking up.
+                // Launch Services is slow, so none of this runs on the main thread.
+                Log.write("[grab] markup: shottr://grab/area")
+                DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                    let say = { (line: String) in DispatchQueue.main.async { self?.note(line) } }
+                    guard NSWorkspace.shared.urlForApplication(withBundleIdentifier: "cc.ffitch.shottr") != nil,
+                          let url = URL(string: "shottr://grab/area") else {
+                        say("Grab markup needs Shottr, and Shottr is not installed"); return
+                    }
+                    // Not activated: Shottr draws its crosshair over whatever is in front.
+                    let cfg = NSWorkspace.OpenConfiguration()
+                    cfg.activates = false
+                    NSWorkspace.shared.open(url, configuration: cfg) { _, err in
+                        say(err == nil ? "Grab markup: drag with the mouse. It opens in Shottr."
+                                       : "Grab markup: Shottr could not be opened")
+                    }
+                }
+            case "grab-area":
                 // Press this Mac's own shortcut for "copy picture of selected area to the clipboard".
                 // It can be changed in System Settings > Keyboard > Keyboard Shortcuts > Screenshots,
                 // so read what it is set to rather than assume Command-Control-Shift-4.
-                let window = key == "grab-window"
                 var code: CGKeyCode = 21
                 var flags: CGEventFlags = [.maskCommand, .maskControl, .maskShift]
                 let hot = (UserDefaults(suiteName: "com.apple.symbolichotkeys")?.dictionary(forKey: "AppleSymbolicHotKeys")?["31"] as? [String: Any])
@@ -441,11 +458,9 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
                         flags = CGEventFlags(rawValue: UInt64(p[2].intValue))
                     }
                 }
-                Log.write("[grab] \(window ? "window" : "area"): key code \(code), modifiers \(flags.rawValue)")
+                Log.write("[grab] area: key code \(code), modifiers \(flags.rawValue)")
                 keys.shortcut(code, flags)
-                // In the crosshair, Space switches to picking a window.
-                if window { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in self?.keys.perform("space") } }
-                note(window ? "Grab window: click a window. It goes to the clipboard." : "Grab area: drag with the mouse. It goes to the clipboard.")
+                note("Grab area: drag with the mouse. It goes to the clipboard.")
             default: break
             }
         case "jump":

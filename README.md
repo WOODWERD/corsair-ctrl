@@ -4,7 +4,7 @@ A touch panel for the CORSAIR XENEON EDGE 14.5" LCD Touchscreen (2560 × 720), f
 
 ![The Corsair Ctrl panel, shown with sample data](docs/panel.png)
 
-Unofficial. Not affiliated with or endorsed by Corsair, Anthropic, Wispr, Spotify or Apple. See the [notices](THIRD_PARTY_NOTICES.md).
+Unofficial. Not affiliated with or endorsed by Corsair, Anthropic, Wispr, Spotify, Shottr or Apple. See the [notices](THIRD_PARTY_NOTICES.md).
 
 ## The panel, area by area
 The panel never takes focus. Whatever app you were working in stays in front, so keys and dictation land there.
@@ -20,7 +20,7 @@ The panel never takes focus. Whatever app you were working in stays in front, so
 - **Done**: Claude finished and is waiting for your next prompt. Tapping the card sets it back to Idle.
 - **Idle**: nothing is happening.
 
-**Key row.** Eight keys under the cards: Esc, Undo, Copy, Paste, Grab area, Grab window, Prev app, Next app. The first four go to the app in front. The grabs press your Mac's own shortcut for copying a screen area to the clipboard, whatever it is set to in Keyboard settings: drag an area, or click a window, with the mouse, then paste. Prev app and Next app page through every open app, one per press, most recently used first; pause four seconds and it starts over.
+**Key row.** Eight keys under the cards: Esc, Undo, Copy, Paste, Grab area, Grab markup, Prev app, Next app. The first four go to the app in front. Grab area presses your Mac's own shortcut for copying a screen area to the clipboard, whatever it is set to in Keyboard settings: drag an area with the mouse, then paste. Grab markup starts the same kind of capture in [Shottr](https://shottr.cc), which opens the image for marking up. Prev app and Next app page through every open app, one per press, most recently used first; pause four seconds and it starts over.
 
 **03 Apps.** Four pinned apps, then every other open app, most recently used first. Tap one to bring it forward. Drag the strip to scroll.
 
@@ -42,6 +42,7 @@ The app finds the Corsair by its shape, the very wide screen, not by its name. I
 - The touch driver: [ajvwhite/MacXeneonEdgeTouchDriver](https://github.com/ajvwhite/MacXeneonEdgeTouchDriver), installed with its `Scripts/install.sh` and allowed under Accessibility and Input Monitoring.
 - Wispr Flow, with push to talk set to Ctrl + Opt + T (the same chord as CYD Flow Ctrl).
 - For Media Ctrl's track info: Spotify or Apple Music. Anything else gets media keys only.
+- For Grab markup: Shottr. Without it the other seven keys still work.
 
 ## Install
 Each command, in order:
@@ -95,7 +96,8 @@ corsair-ctrl/
 Open [app/web/index.html](app/web/index.html) in a browser to see the panel with sample data.
 
 ## Known limits
-- The grab keys need the Mac's "Copy picture of selected area to the clipboard" shortcut switched on, under Keyboard > Keyboard Shortcuts > Screenshots.
+- Grab area needs the Mac's "Copy picture of selected area to the clipboard" shortcut switched on, under Keyboard > Keyboard Shortcuts > Screenshots.
+- Grab markup needs Shottr installed. The first time, Shottr asks whether to allow links from other apps. What happens after the capture is set in Shottr.
 - A card gets its chat name and opens its own session by reading three fields (two ids and the title) from the Claude app's private session records. If a Claude update moves those records, cards show the folder only and fall back to just bringing Claude forward.
 - The panel's hands-free state is its own guess. If you stop Wispr from the Mac instead of the panel, tap Discard to reset it.
 - The top 34 px are left empty because macOS draws its menu bar there.

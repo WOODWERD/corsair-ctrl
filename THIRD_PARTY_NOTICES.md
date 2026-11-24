@@ -31,6 +31,7 @@ Corsair Ctrl is an independent, unofficial project. It is not affiliated with, e
 - **Corsair** and **XENEON EDGE** are trademarks of Corsair Memory, Inc. "Corsair Ctrl" is used descriptively, for a controller that runs on that display, and is not claimed as a brand.
 - **Claude** and **Claude Code** are trademarks of Anthropic, PBC. The app receives Claude Code's documented hook events, opens the Claude desktop app through its `claude://` links, and reads two session identifiers from that app's local records. That record layout is not a published interface and may change.
 - **Wispr Flow** is a trademark of Wispr AI, Inc. The app sends ordinary keyboard shortcuts. No Wispr artwork, logos or code are used; the waveform pill is an original drawing.
+- **Shottr** belongs to its developer. The app opens Shottr's own `shottr://grab/area` link and nothing else. No Shottr artwork, logos or code are used.
 - **Spotify** is a trademark of Spotify AB. **Apple Music**, **macOS** and **AppleScript** are trademarks of Apple Inc. The app controls these players through their published AppleScript interfaces.
 
 The **WOODWERD** name and badge logo (the mark in the panel's footer) are trademarks of WOODWERD LLC and are **not** covered by the MIT licence. You may build and use this project as published; if you fork it for your own product, replace the mark with your own.
