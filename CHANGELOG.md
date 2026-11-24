@@ -2,6 +2,9 @@
 
 What changed in Corsair Ctrl, newest first. The reasons behind each change are in [spec.md](https://github.com/WOODWERD/corsair-ctrl/blob/main/spec.md).
 
+## v0.4.9 — 2026-11-23
+- The theme switch in Settings shows the same three icons as other WOODWERD tools: a screen for following the Mac, a sun for light, a moon for dark.
+
 ## v0.4.8 — 2026-11-23
 - **Grab markup works without Shottr.** If Shottr is not installed, the capture opens in Preview as a new picture, ready for its Markup tools. Nothing is saved to disk. With both, choose under Settings > Grab markup opens in.
 

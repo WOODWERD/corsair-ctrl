@@ -8,7 +8,7 @@ import ServiceManagement
 import ApplicationServices
 
 let PORT: UInt16 = 47616
-let VERSION = "0.4.8"
+let VERSION = "0.4.9"
 let CLAUDE_BUNDLE = "com.anthropic.claudefordesktop"
 
 struct Config: Codable {

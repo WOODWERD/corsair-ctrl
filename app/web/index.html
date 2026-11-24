@@ -282,6 +282,10 @@ body.kiosk .frame{outline:0}
 .seg button:last-child{border-right:0}
 .seg button[aria-pressed="true"]{background:var(--primary);color:var(--primary-ink)}
 .seg button:disabled{color:var(--ink-soft);opacity:.55}
+/* The same three drawings as every WOODWERD theme switch: a screen, a sun, a filled moon. */
+#seg-theme button{display:grid;place-items:center}
+#seg-theme svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#seg-theme svg.moon{fill:currentColor;stroke:none}
 #seg-markup{grid-template-columns:repeat(2,1fr)}
 #seg-markup button{line-height:1.2;padding:0 5px}
 .kv{display:flex;justify-content:space-between;align-items:center;font-size:var(--t-cap);padding:8px 0;border-top:1px solid var(--line)}
@@ -508,7 +512,7 @@ body.folded .rail{border-right:1px solid var(--line-strong)}
     <div class="col">
       <div class="k">Theme</div>
       <div class="seg" id="seg-theme">
-        <button data-t="auto" aria-pressed="true">System</button><button data-t="light" aria-pressed="false">Light</button><button data-t="dark" aria-pressed="false">Dark</button>
+        <button data-t="auto" aria-pressed="true" title="Match the Mac's setting" aria-label="Theme: match the Mac's setting"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.8" y="4.4" width="18.4" height="12.4" rx="2"/><path d="M8.8 20.4h6.4M12 16.8v3.6"/></svg></button><button data-t="light" aria-pressed="false" title="Light" aria-label="Theme: light"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M21.4 12h-2.2M4.8 12H2.6M18.6 5.4l-1.6 1.6M7 17l-1.6 1.6M18.6 18.6L17 17M7 7L5.4 5.4"/></svg></button><button data-t="dark" aria-pressed="false" title="Dark" aria-label="Theme: dark"><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.2A8.4 8.4 0 0 1 9.8 4 8.4 8.4 0 1 0 20 14.2Z"/></svg></button>
       </div>
       <div class="k">Status</div>
       <div class="kv"><span>Session hooks</span><span class="v" id="kv-hooks"></span></div>
@@ -887,7 +891,7 @@ setInterval(() => { if (ST) renderGlance(); }, 30000);
 if (!bridge) {
   const now = Date.now() / 1000;
   window.ctrlUpdate({
-    version: "0.4.8", dock: new URLSearchParams(location.search).get("dock") || "", theme: new URLSearchParams(location.search).get("theme") || "auto", markup: new URLSearchParams(location.search).has("noshottr") ? "preview" : "shottr", shottr: !new URLSearchParams(location.search).has("noshottr"), front: "Claude", lastLine: "20:41:02  Stop esp-ctrl",
+    version: "0.4.9", dock: new URLSearchParams(location.search).get("dock") || "", theme: new URLSearchParams(location.search).get("theme") || "auto", markup: new URLSearchParams(location.search).has("noshottr") ? "preview" : "shottr", shottr: !new URLSearchParams(location.search).has("noshottr"), front: "Claude", lastLine: "20:41:02  Stop esp-ctrl",
     sessions: location.search.includes("empty") ? [] : [
       { id: "3a4b7578-aaaa", name: "edge-ctrl", state: "needs", since: now - 120, last: "Claude needs your permission to use Bash" },
       { id: "7f20d1c4-bbbb", name: "esp-ctrl", state: "working", since: now - 38, last: "Using Edit" },
