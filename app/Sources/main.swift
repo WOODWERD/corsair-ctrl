@@ -8,7 +8,7 @@ import ServiceManagement
 import ApplicationServices
 
 let PORT: UInt16 = 47616
-let VERSION = "0.4.7"
+let VERSION = "0.4.8"
 let CLAUDE_BUNDLE = "com.anthropic.claudefordesktop"
 
 struct Config: Codable {
@@ -42,6 +42,12 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
     private var dock = ""
     private var server: Server?
     private var front = NSWorkspace.shared.frontmostApplication
+    private var markupTurn = 0
+    private var shottrInstalled = false
+    /// The app Grab markup uses: the one chosen in Settings, or Preview when Shottr is not installed.
+    private var markupApp: String {
+        shottrInstalled && UserDefaults.standard.string(forKey: "markup") != "preview" ? "shottr" : "preview"
+    }
     private var touchRunning = false
     private var folded = UserDefaults.standard.bool(forKey: "folded")
     private var iconsSent: Set<String> = []
@@ -68,6 +74,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
 
     func applicationDidFinishLaunching(_ note: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        checkShottr()
         Log.write("[start] Corsair Ctrl \(VERSION)")
 
         // Ask once for Accessibility; the voice keys need it.
@@ -334,6 +341,107 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
         push()
     }
 
+    // MARK: Grabs
+
+    /// Presses this Mac's own shortcut for "copy picture of selected area to the clipboard".
+    /// It can be changed in System Settings > Keyboard > Keyboard Shortcuts > Screenshots,
+    /// so read what it is set to rather than assume Command-Control-Shift-4.
+    /// False when the shortcut is switched off.
+    private func pressAreaGrab(_ what: String) -> Bool {
+        var code: CGKeyCode = 21
+        var flags: CGEventFlags = [.maskCommand, .maskControl, .maskShift]
+        let hot = (UserDefaults(suiteName: "com.apple.symbolichotkeys")?.dictionary(forKey: "AppleSymbolicHotKeys")?["31"] as? [String: Any])
+        if let hot {
+            guard (hot["enabled"] as? NSNumber)?.boolValue != false else {
+                note("The Mac's shortcut for copying a screen area is switched off in Keyboard settings"); return false
+            }
+            if let p = (hot["value"] as? [String: Any])?["parameters"] as? [NSNumber], p.count >= 3 {
+                code = CGKeyCode(p[1].intValue)
+                flags = CGEventFlags(rawValue: UInt64(p[2].intValue))
+            }
+        }
+        Log.write("[grab] \(what): key code \(code), modifiers \(flags.rawValue)")
+        keys.shortcut(code, flags)
+        return true
+    }
+
+    /// Looks for Shottr and then calls `done` on the main thread. Launch Services is slow,
+    /// so the lookup is not made on the main thread.
+    private func checkShottr(_ done: @escaping () -> Void = {}) {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let found = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "cc.ffitch.shottr") != nil
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if found != self.shottrInstalled { self.shottrInstalled = found; self.push() }
+                done()
+            }
+        }
+    }
+
+    /// An area capture through Shottr, which then opens it for marking up.
+    /// Not activated: Shottr draws its crosshair over whatever is in front.
+    private func markupInShottr() {
+        guard let url = URL(string: "shottr://grab/area") else { return }
+        Log.write("[grab] markup: shottr://grab/area")
+        let cfg = NSWorkspace.OpenConfiguration()
+        cfg.activates = false
+        NSWorkspace.shared.open(url, configuration: cfg) { [weak self] _, err in
+            DispatchQueue.main.async {
+                self?.note(err == nil ? "Grab markup: drag with the mouse. It opens in Shottr."
+                                      : "Grab markup: Shottr could not be opened")
+            }
+        }
+    }
+
+    /// Without Shottr: copy the area to the clipboard with the Mac's own shortcut, wait for
+    /// the clipboard to change, then bring Preview forward and press its New from Clipboard
+    /// (Command-N). The picture is never read by this app and never written to disk.
+    private func markupInPreview() {
+        let before = NSPasteboard.general.changeCount
+        guard pressAreaGrab("markup, Preview") else { return }
+        note("Grab markup: drag with the mouse. It opens in Preview.")
+        markupTurn += 1
+        let turn = markupTurn
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let say = { (line: String) in DispatchQueue.main.async { self?.note(line) } }
+            // The capture ends when the mouse is let go, or never if Esc cancels it.
+            var changed = false
+            for _ in 0..<240 {
+                Thread.sleep(forTimeInterval: 0.25)
+                guard let self, self.markupTurn == turn else { return }   // a newer press took over
+                if NSPasteboard.general.changeCount != before { changed = true; break }
+            }
+            guard changed else { Log.write("[grab] markup: nothing was captured within a minute"); return }
+            // Only the kinds of thing on the clipboard are looked at, not the picture.
+            let kinds = NSPasteboard.general.types ?? []
+            guard kinds.contains(.png) || kinds.contains(.tiff) else {
+                say("Grab markup: the clipboard changed, but not to a picture"); return
+            }
+            guard let preview = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Preview") else {
+                say("Grab markup: Preview was not found. The picture is on the clipboard."); return
+            }
+            let cold = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.Preview").isEmpty
+            let cfg = NSWorkspace.OpenConfiguration()
+            cfg.activates = true
+            NSWorkspace.shared.openApplication(at: preview, configuration: cfg) { app, err in
+                guard let app, err == nil else { say("Grab markup: Preview could not be opened. The picture is on the clipboard."); return }
+                // Command-N must land in Preview, so wait until it is the app in front.
+                var front = false
+                for _ in 0..<40 {
+                    if app.isActive { front = true; break }
+                    Thread.sleep(forTimeInterval: 0.1)
+                }
+                guard front else { say("Grab markup: Preview did not come forward. The picture is on the clipboard."); return }
+                Thread.sleep(forTimeInterval: cold ? 1.2 : 0.3)
+                DispatchQueue.main.async {
+                    guard let self, self.markupTurn == turn else { return }
+                    self.keys.shortcut(45, .maskCommand)   // N
+                    self.note("Grab markup: opened in Preview")
+                }
+            }
+        }
+    }
+
     // MARK: Hook events
 
     private func hookEvent(_ body: Data) {
@@ -383,6 +491,8 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
         return [
             "version": VERSION,
             "theme": UserDefaults.standard.string(forKey: "theme") ?? "auto",
+            "markup": markupApp,
+            "shottr": shottrInstalled,
             "sessions": store.top.map { ["id": $0.id, "name": SessionStore.folder($0),
                                          "title": links.title(for: $0.id) ?? "", "state": $0.state,
                                          "since": $0.since, "last": $0.last] },
@@ -425,42 +535,13 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
                     apps.activate(id) { [weak self] line in self?.note(line) }
                 } else { note("No other app to switch to") }
             case "grab-markup":
-                // An area capture through Shottr, which then opens it for marking up.
-                // Launch Services is slow, so none of this runs on the main thread.
-                Log.write("[grab] markup: shottr://grab/area")
-                DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                    let say = { (line: String) in DispatchQueue.main.async { self?.note(line) } }
-                    guard NSWorkspace.shared.urlForApplication(withBundleIdentifier: "cc.ffitch.shottr") != nil,
-                          let url = URL(string: "shottr://grab/area") else {
-                        say("Grab markup needs Shottr, and Shottr is not installed"); return
-                    }
-                    // Not activated: Shottr draws its crosshair over whatever is in front.
-                    let cfg = NSWorkspace.OpenConfiguration()
-                    cfg.activates = false
-                    NSWorkspace.shared.open(url, configuration: cfg) { _, err in
-                        say(err == nil ? "Grab markup: drag with the mouse. It opens in Shottr."
-                                       : "Grab markup: Shottr could not be opened")
-                    }
+                // Shottr or Preview, as chosen in Settings; Preview when Shottr is not installed.
+                checkShottr { [weak self] in
+                    guard let self else { return }
+                    if self.markupApp == "shottr" { self.markupInShottr() } else { self.markupInPreview() }
                 }
             case "grab-area":
-                // Press this Mac's own shortcut for "copy picture of selected area to the clipboard".
-                // It can be changed in System Settings > Keyboard > Keyboard Shortcuts > Screenshots,
-                // so read what it is set to rather than assume Command-Control-Shift-4.
-                var code: CGKeyCode = 21
-                var flags: CGEventFlags = [.maskCommand, .maskControl, .maskShift]
-                let hot = (UserDefaults(suiteName: "com.apple.symbolichotkeys")?.dictionary(forKey: "AppleSymbolicHotKeys")?["31"] as? [String: Any])
-                if let hot {
-                    guard (hot["enabled"] as? NSNumber)?.boolValue != false else {
-                        note("The Mac's shortcut for copying a screen area is switched off in Keyboard settings"); return
-                    }
-                    if let p = (hot["value"] as? [String: Any])?["parameters"] as? [NSNumber], p.count >= 3 {
-                        code = CGKeyCode(p[1].intValue)
-                        flags = CGEventFlags(rawValue: UInt64(p[2].intValue))
-                    }
-                }
-                Log.write("[grab] area: key code \(code), modifiers \(flags.rawValue)")
-                keys.shortcut(code, flags)
-                note("Grab area: drag with the mouse. It goes to the clipboard.")
+                if pressAreaGrab("area") { note("Grab area: drag with the mouse. It goes to the clipboard.") }
             default: break
             }
         case "jump":
@@ -511,6 +592,14 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
                 note("No app is opened at start")
             }
             push()
+        case "markup":
+            if let v = m["value"] as? String, ["shottr", "preview"].contains(v) {
+                UserDefaults.standard.set(v, forKey: "markup")
+                checkShottr { [weak self] in
+                    guard let self else { return }
+                    self.note("Grab markup uses \(self.markupApp == "shottr" ? "Shottr" : "Preview")")
+                }
+            }
         case "theme":
             if let t = m["value"] as? String, ["auto", "light", "dark"].contains(t) {
                 UserDefaults.standard.set(t, forKey: "theme"); push()

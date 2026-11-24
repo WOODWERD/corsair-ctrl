@@ -36,7 +36,7 @@ extra_css:
   - assets/woodwerd/woodwerd.css
 extra:
   purpose: 'Touch panel for the Corsair XENEON EDGE.'
-  version: v0.4.7
+  version: v0.4.8
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/WOODWERD

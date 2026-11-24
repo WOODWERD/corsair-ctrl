@@ -281,6 +281,9 @@ body.kiosk .frame{outline:0}
 .seg button{height:65px;font-size:var(--t-body);font-weight:500;border-right:1px solid var(--line-strong)}
 .seg button:last-child{border-right:0}
 .seg button[aria-pressed="true"]{background:var(--primary);color:var(--primary-ink)}
+.seg button:disabled{color:var(--ink-soft);opacity:.55}
+#seg-markup{grid-template-columns:repeat(2,1fr)}
+#seg-markup button{line-height:1.2;padding:0 5px}
 .kv{display:flex;justify-content:space-between;align-items:center;font-size:var(--t-cap);padding:8px 0;border-top:1px solid var(--line)}
 .kv .v{font-family:var(--mono);display:flex;align-items:center;gap:8px}
 
@@ -516,6 +519,10 @@ body.folded .rail{border-right:1px solid var(--line-strong)}
       <div class="kv"><span>Version</span><span class="v" id="kv-ver"></span></div>
     </div>
     <div class="col actions">
+      <div class="k">Grab markup opens in</div>
+      <div class="seg" id="seg-markup">
+        <button data-m="shottr" aria-pressed="false">Shottr</button><button data-m="preview" aria-pressed="true">Preview</button>
+      </div>
       <button class="btn" id="b-hooks"></button>
       <button class="btn" id="b-ax">Open Accessibility settings</button>
       <button class="btn" id="b-login"></button>
@@ -576,6 +583,10 @@ function renderStatus() {
   document.body.classList.toggle("folded", !!ST.folded);
   $("fold").setAttribute("aria-label", ST.folded ? "Bring the panel back" : "Fold the panel away");
   document.querySelectorAll("#seg-theme button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === ST.theme)));
+  document.querySelectorAll("#seg-markup button").forEach(b => {
+    b.setAttribute("aria-pressed", String(b.dataset.m === ST.markup));
+    if (b.dataset.m === "shottr") { b.disabled = !ST.shottr; b.textContent = ST.shottr ? "Shottr" : "Shottr, not installed"; }
+  });
 }
 
 /* ── 01 Glance ──────────────────────────────────────────────── */
@@ -856,6 +867,7 @@ $("fold").onclick = () => setFold(!(ST && ST.folded));
 $("open-settings").onclick = () => { if (ST && ST.folded) setFold(false); $("sheet").classList.add("open"); };
 $("close-settings").onclick = () => $("sheet").classList.remove("open");
 document.querySelectorAll("#seg-theme button").forEach(b => b.onclick = () => post({ action: "theme", value: b.dataset.t }));
+document.querySelectorAll("#seg-markup button").forEach(b => b.onclick = () => post({ action: "markup", value: b.dataset.m }));
 $("b-hooks").onclick = () => post({ action: "hooks", mode: ST?.status.hooks ? "remove" : "install" });
 $("b-ax").onclick = () => post({ action: "accessibility" });
 $("b-login").onclick = () => post({ action: "login", on: !ST?.status.login });
@@ -875,7 +887,7 @@ setInterval(() => { if (ST) renderGlance(); }, 30000);
 if (!bridge) {
   const now = Date.now() / 1000;
   window.ctrlUpdate({
-    version: "0.4.7", dock: new URLSearchParams(location.search).get("dock") || "", theme: new URLSearchParams(location.search).get("theme") || "auto", front: "Claude", lastLine: "20:41:02  Stop esp-ctrl",
+    version: "0.4.8", dock: new URLSearchParams(location.search).get("dock") || "", theme: new URLSearchParams(location.search).get("theme") || "auto", markup: new URLSearchParams(location.search).has("noshottr") ? "preview" : "shottr", shottr: !new URLSearchParams(location.search).has("noshottr"), front: "Claude", lastLine: "20:41:02  Stop esp-ctrl",
     sessions: location.search.includes("empty") ? [] : [
       { id: "3a4b7578-aaaa", name: "edge-ctrl", state: "needs", since: now - 120, last: "Claude needs your permission to use Bash" },
       { id: "7f20d1c4-bbbb", name: "esp-ctrl", state: "working", since: now - 38, last: "Using Edit" },
